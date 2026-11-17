@@ -1,0 +1,59 @@
+name: Audit mensuel
+
+on:
+  schedule:
+    # Le 1er du mois à 6 h UTC, puis des reprises jusqu'au 4 si le quota Pro s'épuise.
+    # Un passage où tout est déjà fait s'arrête en quelques secondes.
+    - cron: "0 6,11,16,21 1-4 * *"
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: "Test : auditer seulement ces repos (séparés par des virgules). Vide = tous."
+        required: false
+        default: ""
+      force:
+        description: "Relancer l'audit complet du mois même s'il est terminé"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # enregistrer l'état d'avancement dans state/
+  issues: write     # publier le récap (envoyé par e-mail par GitHub)
+
+concurrency:
+  group: audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Installer Claude Code et les outils d'analyse
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          pip install --quiet bandit ruff pip-audit
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+
+      - name: Auditer
+        working-directory: agent
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          INPUT_REPOS: ${{ inputs.repos }}
+          INPUT_FORCE: ${{ inputs.force }}
+        run: python audit.py

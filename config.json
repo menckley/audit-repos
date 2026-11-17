@@ -1,0 +1,13 @@
+{
+  "owner": "menckley",
+  "public_repo": "audit-repos",
+  "security_repo": "audit-securite",
+  "exclude": ["audit-repos"],
+  "model": "sonnet",
+  "max_findings_per_repo": 12,
+  "max_tasks_per_run": 3,
+  "audit_max_turns": 80,
+  "implement_max_turns": 100,
+  "claude_timeout_minutes": 45,
+  "recap_deadline_day": 4
+}

@@ -1,0 +1,50 @@
+name: Tâches validées
+
+on:
+  # Immédiatement quand tu poses le label `approuvé` sur une issue de ce repo.
+  issues:
+    types: [labeled]
+  # Toutes les 3 heures : tâches du repo privé audit-securite et reprises après quota épuisé.
+  schedule:
+    - cron: "30 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: implement
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    # Seul le propriétaire peut déclencher l'agent en posant un label.
+    if: >-
+      github.event_name != 'issues' ||
+      (github.event.label.name == 'approuvé' && github.event.sender.login == github.repository_owner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Installer Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          pip install --quiet ruff pytest
+
+      - name: Traiter les tâches validées
+        working-directory: agent
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: python implement.py
