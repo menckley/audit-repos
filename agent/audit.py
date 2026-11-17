@@ -353,6 +353,11 @@ def main() -> None:
         state["repos"].setdefault(meta["name"], {"status": "pending", "attempts": 0})
     print(f"Audit {month} : {len(repos)} repo(s) — {', '.join(r['name'] for r in repos)}")
 
+    # Les labels de validation doivent exister pour que je puisse les poser moi-même.
+    for target in (PUBLIC_REPO, SECURITY_REPO):
+        for label in ("approuvé", "refusé"):
+            gh.ensure_label(target, label)
+
     known = existing_findings(gh)
     quota_hit = False
     for meta in repos:
