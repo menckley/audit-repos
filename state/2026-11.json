@@ -1,0 +1,97 @@
+{
+  "month": "2026-11",
+  "repos": {
+    "menckleys-projects": {
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-securite",
+          "number": 3,
+          "url": "https://github.com/menckley/audit-securite/issues/3",
+          "title": "Black-Scholes : dividende q utilisé de façon incohérente (call faux si q≠0)",
+          "categorie": "securite",
+          "priorite": "haute",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 10,
+          "url": "https://github.com/menckley/audit-repos/issues/10",
+          "title": "Extraire les pricers du notebook en module testé + CI",
+          "categorie": "maintenance",
+          "priorite": "haute",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 11,
+          "url": "https://github.com/menckley/audit-repos/issues/11",
+          "title": "Ajouter les grecques, la volatilité implicite et les options américaines",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 12,
+          "url": "https://github.com/menckley/audit-repos/issues/12",
+          "title": "Monte Carlo : graine, erreur standard et réduction de variance",
+          "categorie": "amelioration",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 13,
+          "url": "https://github.com/menckley/audit-repos/issues/13",
+          "title": "Passer au-delà de Black-Scholes : volatilité stochastique, LSM, différences finies",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 14,
+          "url": "https://github.com/menckley/audit-repos/issues/14",
+          "title": "Arbre binomial : vectoriser les prix terminaux et valider les entrées",
+          "categorie": "amelioration",
+          "priorite": "basse",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 15,
+          "url": "https://github.com/menckley/audit-repos/issues/15",
+          "title": "Valoriser le projet comme support pédagogique de finance quantitative",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "M"
+        }
+      ],
+      "at": "2026-11-17T22:17:57+00:00"
+    },
+    "newsletter": {
+      "status": "pending",
+      "attempts": 0
+    },
+    "power-hpfc": {
+      "status": "pending",
+      "attempts": 0
+    },
+    "pricer": {
+      "status": "pending",
+      "attempts": 0
+    },
+    "projet-ttf-geopolitique": {
+      "status": "pending",
+      "attempts": 0
+    },
+    "settlements-eex": {
+      "status": "pending",
+      "attempts": 0
+    }
+  },
+  "recap_issue": null,
+  "started": "2026-11-17T22:16:56+00:00"
+}
