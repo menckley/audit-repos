@@ -442,8 +442,92 @@
       "at": "2026-11-17T22:23:28+00:00"
     },
     "settlements-eex": {
-      "status": "pending",
-      "attempts": 0
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-repos",
+          "number": 51,
+          "url": "https://github.com/menckley/audit-repos/issues/51",
+          "title": "Le workflow reste vert quand la collecte échoue ou que l'API EEX ne renvoie rien",
+          "categorie": "maintenance",
+          "priorite": "haute",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 52,
+          "url": "https://github.com/menckley/audit-repos/issues/52",
+          "title": "Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 53,
+          "url": "https://github.com/menckley/audit-repos/issues/53",
+          "title": "Dépendances non épinglées, pas de CI de tests/lint, actions non épinglées par SHA",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-securite",
+          "number": 7,
+          "url": "https://github.com/menckley/audit-securite/issues/7",
+          "title": "Jeton d'écriture du dépôt de données exposé à toute l'exécution (dont le code et les dépendances)",
+          "categorie": "securite",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 54,
+          "url": "https://github.com/menckley/audit-repos/issues/54",
+          "title": "Construire des indicateurs de courbe plus justes : prime à terme, roll-yield, volatilité implicite approchée",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 55,
+          "url": "https://github.com/menckley/audit-repos/issues/55",
+          "title": "Compléter les tests d'archive.py (upsert, idempotence, rattrapage) et nettoyer les alertes ruff",
+          "categorie": "maintenance",
+          "priorite": "basse",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 56,
+          "url": "https://github.com/menckley/audit-repos/issues/56",
+          "title": "Historique CSV : relu et réécrit en entier chaque jour, sans contrôle de schéma ni de plausibilité",
+          "categorie": "amelioration",
+          "priorite": "basse",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 57,
+          "url": "https://github.com/menckley/audit-repos/issues/57",
+          "title": "Passer le workflow à une version Python plus récente et à uv pour l'installation",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 58,
+          "url": "https://github.com/menckley/audit-repos/issues/58",
+          "title": "Valoriser l'historique : clarifier la licence EEX et viser les acheteurs d'énergie / de GO",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "L"
+        }
+      ],
+      "at": "2026-11-17T22:24:34+00:00"
     }
   },
   "recap_issue": null,
