@@ -2,9 +2,10 @@ name: Audit mensuel
 
 on:
   schedule:
-    # Le 1er du mois à 6 h UTC, puis des reprises jusqu'au 4 si le quota Pro s'épuise.
-    # Un passage où tout est déjà fait s'arrête en quelques secondes.
-    - cron: "0 6,11,16,21 1-4 * *"
+    # Démarrage le 1er du mois à 6 h UTC. Les autres passages (4 par jour) ne font que
+    # reprendre un audit interrompu par le quota Pro, même lancé à la main en cours de mois.
+    # Sans audit en cours, un passage s'arrête en quelques secondes.
+    - cron: "0 6,11,16,21 * * *"
   workflow_dispatch:
     inputs:
       repos:

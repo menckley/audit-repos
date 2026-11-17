@@ -336,12 +336,19 @@ def main() -> None:
     force = os.environ.get("INPUT_FORCE") == "true"
     test = bool(only)
 
+    scheduled = os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+    if scheduled and not state_path(month).exists() and now.day > CONFIG["recap_deadline_day"]:
+        # Passage quotidien de reprise : rien n'a été lancé ce mois-ci, rien à reprendre.
+        print(f"Aucun audit {month} en cours.")
+        return
+
     state = {"month": month, "repos": {}, "recap_issue": None} if test else load_state(month)
-    if state.get("recap_issue") and not force:
+    if state.get("recap_issue") is not None and not force:
         print(f"Audit {month} déjà terminé (récap #{state['recap_issue']}).")
         return
     if force and not test:
         state = {"month": month, "repos": {}, "recap_issue": None}
+    state.setdefault("started", now.isoformat(timespec="seconds"))
 
     repos = gh.public_repos()
     if only:
@@ -384,7 +391,9 @@ def main() -> None:
             break
 
     finished = all(r["status"] in ("done", "error") for r in state["repos"].values())
-    deadline = now.day >= CONFIG["recap_deadline_day"] and now.hour >= 20
+    # Si le quota bloque encore après ~3 jours et demi, on envoie un récap partiel.
+    started = datetime.fromisoformat(state["started"])
+    deadline = (now - started).total_seconds() >= (CONFIG["recap_deadline_day"] - 0.5) * 86400
     if test or finished or deadline:
         title = f"📋 Récap audit {month}" + (" (test)" if test else "")
         issue = bot.create_issue(PUBLIC_REPO, title, recap_body(state, test), ["récap", "audit-récap"])
