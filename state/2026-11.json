@@ -72,8 +72,101 @@
       "at": "2026-11-17T22:17:57+00:00"
     },
     "newsletter": {
-      "status": "pending",
-      "attempts": 0
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-repos",
+          "number": 16,
+          "url": "https://github.com/menckley/audit-repos/issues/16",
+          "title": "Le job reste vert quand la génération échoue ; aucune alerte si l'e-mail d'erreur échoue aussi",
+          "categorie": "maintenance",
+          "priorite": "haute",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-securite",
+          "number": 4,
+          "url": "https://github.com/menckley/audit-securite/issues/4",
+          "title": "Workflow sans `permissions:` ni concurrency, actions non épinglées par SHA",
+          "categorie": "securite",
+          "priorite": "moyenne",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 17,
+          "url": "https://github.com/menckley/audit-repos/issues/17",
+          "title": "requirements.txt sans versions : builds non reproductibles",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 18,
+          "url": "https://github.com/menckley/audit-repos/issues/18",
+          "title": "Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 19,
+          "url": "https://github.com/menckley/audit-repos/issues/19",
+          "title": "Collecte limitée aux 40 premières entrées et à la seule journée calendaire de la veille",
+          "categorie": "amelioration",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 20,
+          "url": "https://github.com/menckley/audit-repos/issues/20",
+          "title": "Passer à la sortie structurée JSON Schema de Mistral et réévaluer le modèle",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 21,
+          "url": "https://github.com/menckley/audit-repos/issues/21",
+          "title": "Mémoire entre jours : suivi des sujets, archive web et agenda de la semaine",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 22,
+          "url": "https://github.com/menckley/audit-repos/issues/22",
+          "title": "Pas de README ; commentaire du cron contradictoire (8h00 vs 5h00)",
+          "categorie": "maintenance",
+          "priorite": "basse",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 23,
+          "url": "https://github.com/menckley/audit-repos/issues/23",
+          "title": "Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 24,
+          "url": "https://github.com/menckley/audit-repos/issues/24",
+          "title": "Valoriser le récap : veille géopolitique pour PME exportatrices, étudiants et clubs d'investissement",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "L"
+        }
+      ],
+      "at": "2026-11-17T22:19:28+00:00"
     },
     "power-hpfc": {
       "status": "pending",
