@@ -345,8 +345,101 @@
       "at": "2026-11-17T22:22:15+00:00"
     },
     "projet-ttf-geopolitique": {
-      "status": "pending",
-      "attempts": 0
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-repos",
+          "number": 41,
+          "url": "https://github.com/menckley/audit-repos/issues/41",
+          "title": "Ajouter une CI GitHub Actions (pytest + ruff)",
+          "categorie": "maintenance",
+          "priorite": "haute",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 42,
+          "url": "https://github.com/menckley/audit-repos/issues/42",
+          "title": "Remplacer les exports manuels Investing.com par une source de prix reproductible",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 43,
+          "url": "https://github.com/menckley/audit-repos/issues/43",
+          "title": "Modèle de base probabiliste : régression quantile / LightGBM et conformal prediction",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 44,
+          "url": "https://github.com/menckley/audit-repos/issues/44",
+          "title": "Créer un pyproject.toml avec configuration ruff, pytest et dépendances épinglées",
+          "categorie": "amelioration",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 45,
+          "url": "https://github.com/menckley/audit-repos/issues/45",
+          "title": "Factoriser la gestion HTTP (retries, backoff) commune aux collecteurs",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 46,
+          "url": "https://github.com/menckley/audit-repos/issues/46",
+          "title": "Collecte incrémentale quotidienne avec contrôles de qualité de données",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 47,
+          "url": "https://github.com/menckley/audit-repos/issues/47",
+          "title": "Étude d'événements : rendements anormaux contre le contrefactuel du modèle de base",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 48,
+          "url": "https://github.com/menckley/audit-repos/issues/48",
+          "title": "Cibler Python 3.13/3.14 et tester la compatibilité pandas 3",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 49,
+          "url": "https://github.com/menckley/audit-repos/issues/49",
+          "title": "Valoriser le projet : indicateur de risque géopolitique gaz pour acteurs de l'énergie",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 50,
+          "url": "https://github.com/menckley/audit-repos/issues/50",
+          "title": "Compléter le README : tests, versions, schémas de données",
+          "categorie": "maintenance",
+          "priorite": "basse",
+          "effort": "XS"
+        }
+      ],
+      "at": "2026-11-17T22:23:28+00:00"
     },
     "settlements-eex": {
       "status": "pending",
