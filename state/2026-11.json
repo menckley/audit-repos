@@ -284,8 +284,65 @@
       "at": "2026-11-17T22:21:13+00:00"
     },
     "pricer": {
-      "status": "pending",
-      "attempts": 0
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-repos",
+          "number": 36,
+          "url": "https://github.com/menckley/audit-repos/issues/36",
+          "title": "Day-ahead au pas de 15 minutes depuis le 1er octobre 2025 : valider le modèle horaire (déviation, risque, profils)",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 37,
+          "url": "https://github.com/menckley/audit-repos/issues/37",
+          "title": "Marché post-ARENH (fin au 31/12/2025, VNU) : offrir des contrats à prix de gros pour clients nus",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-securite",
+          "number": 6,
+          "url": "https://github.com/menckley/audit-securite/issues/6",
+          "title": "Épingler les actions GitHub par SHA complet (TODO déjà présent dans ci.yml)",
+          "categorie": "securite",
+          "priorite": "moyenne",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 38,
+          "url": "https://github.com/menckley/audit-repos/issues/38",
+          "title": "Réduire le bruit des outils : exclure `S101` des tests et traiter les rares alertes réelles",
+          "categorie": "amelioration",
+          "priorite": "basse",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 39,
+          "url": "https://github.com/menckley/audit-repos/issues/39",
+          "title": "CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
+          "categorie": "maintenance",
+          "priorite": "basse",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 40,
+          "url": "https://github.com/menckley/audit-repos/issues/40",
+          "title": "Options : remplacer l'interpolation linéaire de volatilité et le plat hors grille par un smile calibré",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "L"
+        }
+      ],
+      "at": "2026-11-17T22:22:15+00:00"
     },
     "projet-ttf-geopolitique": {
       "status": "pending",
