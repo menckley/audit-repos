@@ -169,8 +169,119 @@
       "at": "2026-11-17T22:19:28+00:00"
     },
     "power-hpfc": {
-      "status": "pending",
-      "attempts": 0
+      "status": "done",
+      "attempts": 0,
+      "created": [
+        {
+          "repo": "audit-repos",
+          "number": 25,
+          "url": "https://github.com/menckley/audit-repos/issues/25",
+          "title": "Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
+          "categorie": "maintenance",
+          "priorite": "haute",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 26,
+          "url": "https://github.com/menckley/audit-repos/issues/26",
+          "title": "Surface de volatilité implicite (SVI/SSVI) calibrée sur les settlements d'options EEX",
+          "categorie": "operationnel",
+          "priorite": "haute",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 27,
+          "url": "https://github.com/menckley/audit-repos/issues/27",
+          "title": "Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 28,
+          "url": "https://github.com/menckley/audit-repos/issues/28",
+          "title": "Dépendances sans borne haute ni lockfile (run quotidien et app)",
+          "categorie": "maintenance",
+          "priorite": "moyenne",
+          "effort": "S"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 29,
+          "url": "https://github.com/menckley/audit-repos/issues/29",
+          "title": "Forme horaire : conditionner sur la charge résiduelle et exploiter le pas 15 min",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "L"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 30,
+          "url": "https://github.com/menckley/audit-repos/issues/30",
+          "title": "Rapport quotidien : mouvement de courbe, écart au spot, P&L de couverture",
+          "categorie": "operationnel",
+          "priorite": "moyenne",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 31,
+          "url": "https://github.com/menckley/audit-repos/issues/31",
+          "title": "Durcir ruff, ajouter pre-commit et typage (mypy/pyright)",
+          "categorie": "amelioration",
+          "priorite": "basse",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 32,
+          "url": "https://github.com/menckley/audit-repos/issues/32",
+          "title": "Factoriser pricer_page.py et le client GitHub dupliqué",
+          "categorie": "amelioration",
+          "priorite": "basse",
+          "effort": "M"
+        },
+        {
+          "repo": "audit-securite",
+          "number": 5,
+          "url": "https://github.com/menckley/audit-securite/issues/5",
+          "title": "Durcir le téléchargement du tarball de données (jeton, taille)",
+          "categorie": "securite",
+          "priorite": "basse",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 33,
+          "url": "https://github.com/menckley/audit-repos/issues/33",
+          "title": "Veille : tester sur Python 3.13/3.14 et migrer le workflow quotidien",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "XS"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 34,
+          "url": "https://github.com/menckley/audit-repos/issues/34",
+          "title": "Étendre la HPFC à d'autres zones et valoriser en service",
+          "categorie": "operationnel",
+          "priorite": "basse",
+          "effort": "XL"
+        },
+        {
+          "repo": "audit-repos",
+          "number": 35,
+          "url": "https://github.com/menckley/audit-repos/issues/35",
+          "title": "Documenter l'exploitation : reprise, rotation des secrets, contribution",
+          "categorie": "maintenance",
+          "priorite": "basse",
+          "effort": "S"
+        }
+      ],
+      "at": "2026-11-17T22:21:13+00:00"
     },
     "pricer": {
       "status": "pending",
