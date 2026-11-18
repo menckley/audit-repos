@@ -50,6 +50,8 @@ Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développ
 Chaque proposition d'amélioration ou opérationnelle se termine par :
 
 - [ ] ✅ **Lancer** : l'agent la réalise et merge si la CI est verte
+- [ ] ⏸ **Plus tard** : l'issue est mise de côté (fermée) ; l'Auditeur la réexamine au prochain
+  audit et la rouvre si elle est toujours pertinente, sinon il la ferme avec une explication
 - [ ] ❌ **Refuser** : l'issue est fermée et ne sera plus proposée
 
 Un clic suffit. Pour ajouter des précisions, j'écris un commentaire **avant** de cocher :

@@ -29,6 +29,15 @@ Déjà traités ou refusés par le propriétaire (ne les repropose que si la sit
 **significativement** changé, et dis-le dans le constat) :
 {{CLOSED}}
 
+## Propositions mises de côté par le propriétaire (« Plus tard »)
+
+{{DEFERRED}}
+
+Pour chacune, vérifie dans le code actuel si elle est **toujours pertinente** (pas déjà faite,
+pas rendue inutile par un changement). Ne les repropose pas comme nouveaux constats. S'il y en
+a, écris dans `{{DEFERRED_PATH}}` un tableau JSON :
+`[{"id": "…", "pertinent": true, "raison": "une phrase, utile au propriétaire"}]`.
+
 ## Ta mission
 
 1. Comprends ce que fait le projet : lis le README, la structure et le code principal.

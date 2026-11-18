@@ -1,7 +1,7 @@
 name: 🛠️ Développeur
 
 on:
-  # Dès que tu coches « Lancer » ou « Refuser » dans une issue de ce repo.
+  # Dès que tu coches « Lancer », « Plus tard » ou « Refuser » dans une issue de ce repo.
   issues:
     types: [edited, labeled]
   # Toutes les heures : tâches automatiques, merges après CI verte, Dependabot,
@@ -28,7 +28,9 @@ jobs:
         contains(github.event.issue.body, '- [x] ✅ **Lancer**') ||
         contains(github.event.issue.body, '- [X] ✅ **Lancer**') ||
         contains(github.event.issue.body, '- [x] ❌ **Refuser**') ||
-        contains(github.event.issue.body, '- [X] ❌ **Refuser**')))
+        contains(github.event.issue.body, '- [X] ❌ **Refuser**') ||
+        contains(github.event.issue.body, '- [x] ⏸ **Plus tard**') ||
+        contains(github.event.issue.body, '- [X] ⏸ **Plus tard**')))
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:

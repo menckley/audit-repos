@@ -34,6 +34,8 @@ LABEL_COLORS = {
     "à-valider": "fbca04",
     "approuvé": "0e8a16",
     "refusé": "b60205",
+    "plus-tard": "c5def5",
+    "obsolète": "ededed",
     "en-cours": "1d76db",
     "pr-ouverte": "0052cc",
     "mergé": "6f42c1",
@@ -56,6 +58,9 @@ DECISION_START = "<!-- decision -->"
 DECISION_END = "<!-- /decision -->"
 LAUNCH_RE = re.compile(r"- \[[xX]\] ✅ \*\*Lancer\*\*")
 REFUSE_RE = re.compile(r"- \[[xX]\] ❌ \*\*Refuser\*\*")
+LATER_RE = re.compile(r"- \[[xX]\] ⏸ \*\*Plus tard\*\*")
+LAUNCH_TEXT_RE = re.compile(r"- \[[ xX]\] ✅ \*\*Lancer\*\* : (.+)")
+LATER_LINE = "- [ ] ⏸ **Plus tard** : l'issue est mise de côté et te sera reproposée au prochain audit"
 
 
 def is_auto(categorie: str, effort: str, majeur: bool) -> bool:
@@ -71,6 +76,7 @@ def decision_block(what: str) -> str:
         "**Ta décision** (un clic suffit) :",
         "",
         f"- [ ] ✅ **Lancer** : {what}",
+        LATER_LINE,
         "- [ ] ❌ **Refuser** : l'issue est fermée et ne sera plus proposée",
         "",
         "💬 Des précisions ? Écris un commentaire **avant** de cocher : l'agent le lira.",
@@ -91,6 +97,13 @@ def footer(auto: bool, kind: str, codable: bool) -> str:
     else:
         what = "l'agent réalise la tâche et merge si la CI est verte"
     return decision_block(what)
+
+
+def refresh_decision(body: str) -> str:
+    """Remet des cases neuves (avec « Plus tard ») en gardant le texte propre à la tâche."""
+    found = LAUNCH_TEXT_RE.search(body)
+    what = found[1].strip() if found else "l'agent réalise la tâche et merge si la CI est verte"
+    return set_decision(body, decision_block(what))
 
 
 def set_decision(body: str, replacement: str) -> str:

@@ -23,10 +23,10 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from common import (AGENT_MARK, CONFIG, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
+from common import (AGENT_MARK, CONFIG, DECISION_START, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
                     REPAIR_BACK, REPAIR_MARK,
                     ROOT, SECURITY_REPO, V2, GitHub, GitHubError, QuotaExhausted, commit_state,
-                    compose_body, decision_block, footer, fresh_clone, is_auto, render,
+                    compose_body, decision_block, footer, refresh_decision, fresh_clone, is_auto, render,
                     run_claude, scrub, set_decision, sh, tmp_dir, truncate)
 
 READ_TOOLS = ["Read", "Glob", "Grep", "WebSearch", "WebFetch",
@@ -144,10 +144,18 @@ def reopen_decision(gh: GitHub, repo: str, issue: dict) -> None:
 
 
 def migrate_backlog(gh: GitHub, issues: dict[str, list[dict]]) -> None:
-    """Passe les issues créées avant les cases à cocher au nouveau format (une seule fois)."""
+    """Passe les anciennes issues au format actuel (une seule fois) : cases à cocher, mode
+    auto, puis case « Plus tard » ajoutée aux blocs de décision qui ne l'ont pas."""
     for repo, items in issues.items():
         for issue in items:
             body = issue.get("body") or ""
+            if V2 in body and DECISION_START in body and "⏸ **Plus tard**" not in body \
+                    and not LAUNCH_RE.search(body) and issue["user"]["login"].lower() == OWNER.lower():
+                body = refresh_decision(body)
+                gh.update_issue(repo, issue["number"], body=body)
+                issue["body"] = body
+                print(f"  case « Plus tard » ajoutée : {repo}#{issue['number']}")
+                continue
             marker = MARKER_RE.search(body)
             if V2 in body or not marker or issue["user"]["login"].lower() != OWNER.lower():
                 continue
@@ -981,6 +989,12 @@ def main() -> None:
                     relabel(gh, repo, issue["number"], ["à-valider", "auto"], ["refusé"])
                     gh.close_issue(repo, issue["number"], "not_planned")
                     print(f"  refusée : {repo}#{issue['number']}")
+                elif LATER_RE.search(body):
+                    gh.update_issue(repo, issue["number"], body=set_decision(
+                        body, f"⏸ Mise de côté le {now():%d/%m/%Y} : reviendra au prochain audit."))
+                    relabel(gh, repo, issue["number"], ["à-valider"], ["plus-tard"])
+                    gh.close_issue(repo, issue["number"], "not_planned")
+                    print(f"  plus tard : {repo}#{issue['number']}")
                 elif LAUNCH_RE.search(body) or "approuvé" in labels:
                     queue.append((repo, issue, True))
                 elif ("auto" in labels or cat_of(labels) in CONFIG.get("always_auto_categories", [])) \

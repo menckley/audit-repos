@@ -449,9 +449,56 @@ def test_hygiene():
     print("OK 16 branches mergées supprimées ; branches ouvertes et les tiennes intactes")
 
 
+def test_later():
+    import audit
+    import implement as imp
+    # la case existe dans les nouvelles issues
+    block = common.decision_block("l'agent réalise la tâche")
+    assert "⏸ **Plus tard**" in block
+    # une issue d'avant reçoit la case, en gardant son texte propre
+    old_block = block.replace(common.LATER_LINE + "\n", "").replace("l'agent réalise la tâche", "texte spécifique")
+    body = "contenu\n\n---\n\n" + old_block + "\n\n<!-- audit-finding: pricer/idee -->\n" + common.V2
+    gh = FakeGH()
+    gh.issues_db[("audit-repos", 70)] = {"number": 70, "title": "[pricer] Idée", "state": "open", "user": OWNER,
+                                         "body": body, "labels": [{"name": "à-valider"}, {"name": "type:fonctionnalite"}]}
+    imp.migrate_backlog(gh, {"audit-repos": gh.issues("audit-repos")})
+    issue = gh.issues_db[("audit-repos", 70)]
+    assert "⏸ **Plus tard**" in issue["body"] and "texte spécifique" in issue["body"]
+    # cocher « Plus tard » ferme l'issue avec le label plus-tard (sans la refuser)
+    issue["body"] = issue["body"].replace("- [ ] ⏸ **Plus tard**", "- [x] ⏸ **Plus tard**")
+    st = {"pending": [], "watch": [], "log": [], "seen": [], "last_bilan": None}
+    imp.load_state = lambda: st
+    imp.save_state = lambda s: None
+    imp.GitHub = lambda token: gh
+    imp.main()
+    assert issue["state"] == "closed" and "plus-tard" in labels(issue) and "refusé" not in labels(issue)
+    assert ("audit-repos", 70, "not_planned") in gh.closed and "Mise de côté" in issue["body"]
+    print("OK 17 « Plus tard » : case ajoutée aux anciennes issues, issue mise de côté")
+
+    # à l'audit suivant : une pertinente rouverte, une obsolète laissée fermée
+    gone = copy.deepcopy(issue)
+    gone.update(number=71, title="[pricer] Vieille idée")
+    gh.issues_db[("audit-repos", 71)] = gone
+    gh.write = lambda method, path, data=None: gh.comments_db.setdefault(path, []).append(data) or {}
+    deferred = [{"repo": "audit-repos", "issue": issue, "id": "idee"},
+                {"repo": "audit-repos", "issue": gone, "id": "vieille"}]
+    verdicts = {"idee": {"id": "idee", "pertinent": True, "raison": "toujours utile"},
+                "vieille": {"id": "vieille", "pertinent": False, "raison": "déjà faite dans #12"}}
+    results = audit.process_deferred(gh, deferred, verdicts, "2026-12")
+    assert issue["state"] == "open" and "à-valider" in labels(issue) and "plus-tard" not in labels(issue)
+    assert "- [ ] ⏸ **Plus tard**" in issue["body"] and "- [ ] ✅ **Lancer**" in issue["body"]
+    assert gone["state"] == "closed" and "obsolète" in labels(gone)
+    recap = audit.recap_body({"month": "2026-12", "repos": {"pricer": {"status": "done", "created": [],
+                                                                        "deferred": results}}}, False)
+    assert "Reportées du mois dernier, de retour (1)" in recap and "devenues sans objet (1)" in recap
+    assert "déjà faite dans #12" in recap
+    print("OK 18 audit suivant : reportée pertinente rouverte, obsolète fermée, récap à jour")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
     test_repairer()
     test_hygiene()
+    test_later()
     print("\nTous les tests passent.")

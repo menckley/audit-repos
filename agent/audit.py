@@ -13,9 +13,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from common import (CONFIG, MARKER_RE, OWNER, PUBLIC_REPO, ROOT, SECURITY_REPO, GitHub,
+from common import (AGENT_MARK, CONFIG, MARKER_RE, OWNER, PUBLIC_REPO, ROOT, SECURITY_REPO, GitHub,
                     QuotaExhausted, commit_state, compose_body, footer, fresh_clone, is_auto,
-                    render, run_claude, sh, tmp_dir, truncate)
+                    refresh_decision, render, run_claude, sh, tmp_dir, truncate)
 
 CATEGORIES = {"securite", "maintenance", "amelioration", "operationnel"}
 TYPES = {"correctif", "refactoring", "tests", "documentation", "outillage", "dependances",
@@ -196,9 +196,12 @@ def existing_findings(gh: GitHub) -> dict[str, dict[str, list[str]]]:
             m = MARKER_RE.search(issue.get("body") or "")
             if not m:
                 continue
-            entry = known.setdefault(m["repo"], {"ids": [], "open": [], "closed": []})
+            entry = known.setdefault(m["repo"], {"ids": [], "open": [], "closed": [], "deferred": []})
             entry["ids"].append(m["id"])
-            entry["open" if issue["state"] == "open" else "closed"].append(
+            deferred = issue["state"] == "closed" and "plus-tard" in {l["name"] for l in issue["labels"]}
+            if deferred:
+                entry["deferred"].append({"repo": target, "issue": issue, "id": m["id"]})
+            entry["open" if issue["state"] == "open" or deferred else "closed"].append(
                 f"{m['id']} — {issue['title']}")
     return known
 
@@ -206,13 +209,18 @@ def existing_findings(gh: GitHub) -> dict[str, dict[str, list[str]]]:
 # --------------------------------------------------------------------------- audit d'un repo
 
 
-def audit_repo(gh: GitHub, meta: dict, known: dict, month: str) -> list[dict]:
+def audit_repo(gh: GitHub, meta: dict, known: dict, month: str) -> tuple[list[dict], dict]:
     repo = meta["name"]
     work = tmp_dir("audit")
     repo_dir = fresh_clone(repo, work / repo)
     findings_path = work / f"{repo}-findings.json"
     findings_path.unlink(missing_ok=True)
-    entry = known.get(repo, {"ids": [], "open": [], "closed": []})
+    deferred_path = work / f"{repo}-reportees.json"
+    deferred_path.unlink(missing_ok=True)
+    entry = known.get(repo, {"ids": [], "open": [], "closed": [], "deferred": []})
+    deferred_text = "\n\n".join(
+        f"#### `{d['id']}` — {d['issue']['title']}\n\n{d['issue'].get('body', '').split(chr(10) + '---' + chr(10))[0]}"
+        for d in entry["deferred"]) or "(aucune)"
     prompt = render("audit.md", {
         "OWNER": OWNER,
         "REPO": repo,
@@ -224,12 +232,48 @@ def audit_repo(gh: GitHub, meta: dict, known: dict, month: str) -> list[dict]:
         "STATIC": static_analysis(repo_dir),
         "OPEN": "\n".join(f"- {t}" for t in entry["open"]) or "(aucun)",
         "CLOSED": "\n".join(f"- {t}" for t in entry["closed"][-60:]) or "(aucun)",
+        "DEFERRED": deferred_text,
+        "DEFERRED_PATH": str(deferred_path),
     })
     run_claude(prompt, repo_dir, AUDIT_TOOLS, CONFIG["audit_max_turns"])
     if not findings_path.exists():
         raise RuntimeError("Claude n'a pas produit le fichier de constats")
     raw = json.loads(findings_path.read_text(encoding="utf-8"))
-    return validate(raw, repo, set(entry["ids"]))
+    verdicts = {}
+    if deferred_path.exists():
+        try:
+            verdicts = {str(v.get("id")): v for v in json.loads(deferred_path.read_text(encoding="utf-8"))
+                        if isinstance(v, dict)}
+        except (json.JSONDecodeError, TypeError):
+            verdicts = {}
+    return validate(raw, repo, set(entry["ids"])), verdicts
+
+
+def process_deferred(gh: GitHub, deferred: list[dict], verdicts: dict, month: str) -> list[dict]:
+    """Rouvre les propositions mises de côté encore pertinentes ; ferme les autres comme obsolètes."""
+    results = []
+    for d in deferred:
+        issue, target, number = d["issue"], d["repo"], d["issue"]["number"]
+        title = "Correctif de sécurité" if target == SECURITY_REPO else issue["title"]  # état public
+        verdict = verdicts.get(d["id"], {})
+        reason = str(verdict.get("raison") or "").strip()
+        if verdict.get("pertinent") is False:
+            gh.write("POST", f"/repos/{OWNER}/{target}/issues/{number}/comments",
+                     {"body": f"{AGENT_MARK}\n🗑️ Réexaminée à l'audit de {month} : **plus pertinente**."
+                              + (f"\n\n{reason}" if reason else "")})
+            gh.remove_label(target, number, "plus-tard")
+            gh.add_labels(target, number, ["obsolète"])
+            results.append({"repo": target, "number": number, "title": title, "obsolete": True,
+                            "reason": reason})
+            continue
+        gh.update_issue(target, number, state="open", body=refresh_decision(issue.get("body") or ""))
+        gh.remove_label(target, number, "plus-tard")
+        gh.add_labels(target, number, ["à-valider", f"audit-{month}"])
+        if reason:
+            gh.write("POST", f"/repos/{OWNER}/{target}/issues/{number}/comments",
+                     {"body": f"{AGENT_MARK}\n⏸ De retour à l'audit de {month} : {reason}"})
+        results.append({"repo": target, "number": number, "title": title, "obsolete": False})
+    return results
 
 
 def publish(gh: GitHub, repo: str, findings: list[dict], month: str) -> list[dict]:
@@ -295,7 +339,7 @@ def recap_body(state: dict, test: bool) -> str:
     lines += [f"- #{i['number']} {i['title']}" for i in auto] or ["- (rien ce mois-ci)"]
 
     lines += ["", f"## ☑️ À décider ({len(manual)})",
-              "Ouvre l'issue et coche **Lancer** ou **Refuser**. Un commentaire avant de cocher "
+              "Ouvre l'issue et coche **Lancer**, **Plus tard** ou **Refuser**. Un commentaire avant de cocher "
               "permet d'ajouter des précisions."]
     if not manual:
         lines.append("Aucune nouvelle proposition ce mois-ci.")
@@ -305,6 +349,19 @@ def recap_body(state: dict, test: bool) -> str:
             lines += ["", f"### {CAT_LABEL[cat]}"]
             lines += [f"- #{i['number']} {i['title']} — priorité {i['priorite']}, effort {i['effort']}"
                       for i in group]
+
+    back = [d for r in repos.values() for d in r.get("deferred", []) if not d["obsolete"]]
+    gone = [d for r in repos.values() for d in r.get("deferred", []) if d["obsolete"]]
+    if back:
+        lines += ["", f"## ⏸ Reportées du mois dernier, de retour ({len(back)})",
+                  "Toujours pertinentes d'après l'Auditeur : coche **Lancer**, **Plus tard** ou **Refuser**."]
+        lines += [f"- #{d['number']} {d['title']}" if d["repo"] == PUBLIC_REPO else
+                  f"- [{d['title']}](https://github.com/{OWNER}/{d['repo']}/issues/{d['number']})" for d in back]
+    if gone:
+        lines += ["", f"## 🗑️ Reportées devenues sans objet ({len(gone)})",
+                  "Fermées par l'Auditeur, avec l'explication en commentaire."]
+        lines += [f"- #{d['number']} {d['title']}" + (f" — {d['reason']}" if d.get("reason") else "")
+                  for d in gone]
 
     if missing:
         lines += ["", "## ⚠️ Repos non audités ce mois-ci"]
@@ -364,7 +421,9 @@ def main() -> None:
             continue
         print(f"\n▶ {name}")
         try:
-            findings = audit_repo(gh, meta, known, month)
+            findings, verdicts = audit_repo(gh, meta, known, month)
+            deferred = known.get(name, {}).get("deferred", [])
+            entry["deferred"] = [] if test else process_deferred(gh, deferred, verdicts, month)
             entry.update(status="done", created=publish(gh, name, findings, month),
                          at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
             entry.pop("error", None)
