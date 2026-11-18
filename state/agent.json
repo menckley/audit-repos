@@ -1,53 +1,11 @@
 {
   "pending": [
     {
-      "target": "newsletter",
-      "number": 1,
-      "url": "https://github.com/menckley/newsletter/pull/1",
-      "branch": "agent/ci-pull-requests",
-      "title": "[newsletter] Ajouter une CI (tests sur les Pull Requests)",
-      "issue_repo": "audit-repos",
-      "issue": 61,
-      "security": false,
-      "opened": "2026-11-18T07:51:52+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "menckleys-projects",
-      "number": 1,
-      "url": "https://github.com/menckley/menckleys-projects/pull/1",
-      "branch": "agent/ci-pull-requests",
-      "title": "[menckleys-projects] Ajouter une CI (tests sur les Pull Requests)",
-      "issue_repo": "audit-repos",
-      "issue": 60,
-      "security": false,
-      "opened": "2026-11-18T07:52:37+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "pricer",
-      "number": 9,
-      "url": "https://github.com/menckley/pricer/pull/9",
-      "branch": "agent/journal-pricings-publics-donnees-commerciales",
-      "title": "[pricer] Le journal des pricings (marges, libellés clients) est poussé dans un dépôt devenu public",
-      "issue_repo": "audit-securite",
-      "issue": 1,
-      "security": true,
-      "opened": "2026-11-18T07:54:31+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
       "target": "pricer",
       "number": 10,
       "url": "https://github.com/menckley/pricer/pull/10",
       "branch": "agent/journal-concurrence-et-commit-message",
-      "title": "[pricer] Archivage GitHub : 2 tentatives seulement, libellé libre dans le message de commit, SHA1 en test",
+      "title": "Correctif de sécurité",
       "issue_repo": "audit-securite",
       "issue": 2,
       "security": true,
@@ -55,18 +13,93 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "menckleys-projects",
+      "number": 4,
+      "url": "https://github.com/menckley/menckleys-projects/pull/4",
+      "branch": "agent/bsm-dividende-incoherent",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 3,
+      "security": true,
+      "opened": "2026-11-18T08:31:33+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
-  "watch": [],
+  "watch": [
+    {
+      "target": "newsletter",
+      "sha": "be682ac44519c4d3ea1a6b20284c1b225f996fe7",
+      "merged": "2026-11-18T08:30:00+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/1",
+      "title": "[newsletter] Ajouter une CI (tests sur les Pull Requests)",
+      "issue_repo": "audit-repos",
+      "issue": 61,
+      "security": false
+    },
+    {
+      "target": "menckleys-projects",
+      "sha": "c701f3d39bf982184bcc67a8e4a6de373752dc5b",
+      "merged": "2026-11-18T08:30:09+00:00",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/1",
+      "title": "[menckleys-projects] Ajouter une CI (tests sur les Pull Requests)",
+      "issue_repo": "audit-repos",
+      "issue": 60,
+      "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "0c1c3122fc0d2538d0410beaad7e6008f737dbc5",
+      "merged": "2026-11-18T08:30:18+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/9",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 1,
+      "security": true
+    }
+  ],
   "log": [
     {
       "type": "clarify",
       "at": "2026-11-18T07:56:31+00:00",
       "reported": false,
-      "title": "[pricer] Épingler les actions GitHub par SHA complet (TODO déjà présent dans ci.yml)",
+      "title": "Correctif de sécurité",
       "issue": "https://github.com/menckley/audit-securite/issues/6",
       "security": true,
-      "detail": "## Contexte\n\nAucun commit n'a été fait : la tâche n'a pas pu être menée proprement.\n\nPour épingler `actions/checkout@v7` et `actions/setup-python@v7`, il faut les SHA de 40 caractères que ces tags désignent. L'environnement d'exécution a refusé tout accès réseau : `git ls-remote` et `gh api` ont tou\n[… tronqué, 1072 caractères de plus]"
+      "detail": "Voir l'issue privée."
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T08:30:00+00:00",
+      "reported": false,
+      "title": "[newsletter] Ajouter une CI (tests sur les Pull Requests)",
+      "pr": "https://github.com/menckley/newsletter/pull/1",
+      "issue": "https://github.com/menckley/audit-repos/issues/61",
+      "security": false,
+      "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T08:30:09+00:00",
+      "reported": false,
+      "title": "[menckleys-projects] Ajouter une CI (tests sur les Pull Requests)",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/1",
+      "issue": "https://github.com/menckley/audit-repos/issues/60",
+      "security": false,
+      "repo": "menckleys-projects"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T08:30:18+00:00",
+      "reported": false,
+      "title": "Correctif de sécurité",
+      "pr": "https://github.com/menckley/pricer/pull/9",
+      "issue": "https://github.com/menckley/audit-securite/issues/1",
+      "security": true,
+      "repo": "pricer"
     }
   ],
   "last_bilan": null,
