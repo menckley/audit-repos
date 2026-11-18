@@ -15,6 +15,7 @@ L'agent pousse et merge avec le token GitHub, que Claude ne voit jamais.
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -338,6 +339,89 @@ def human_action(body: str) -> str:
     return m[1].strip() if m else ""
 
 
+# --------------------------------------------------------------------------- CI d'abord
+
+CI_ID = "ci-pull-requests"
+CI_TITLE_RE = re.compile(r"\bCI\b|intégration continue|GitHub Actions.*tests", re.I)
+
+
+def has_pr_ci(gh: GitHub, repo: str, cache: dict[str, bool]) -> bool:
+    """Vrai si un workflow du repo tourne sur les Pull Requests."""
+    if repo not in cache:
+        cache[repo] = False
+        try:
+            files = gh.get(f"/repos/{OWNER}/{repo}/contents/.github/workflows") or []
+        except GitHubError:
+            files = []
+        for f in files:
+            if f["name"].endswith((".yml", ".yaml")):
+                content = gh.get(f"/repos/{OWNER}/{repo}/contents/{f['path']}")
+                text = base64.b64decode(content.get("content", "")).decode("utf-8", "replace")
+                if "pull_request" in text:
+                    cache[repo] = True
+                    break
+    return cache[repo]
+
+
+def is_ci_task(issue: dict) -> bool:
+    marker = MARKER_RE.search(issue.get("body") or "")
+    return bool(marker and marker["id"] == CI_ID) or (
+        "type:outillage" in labels_of(issue) and bool(CI_TITLE_RE.search(issue["title"])))
+
+
+def ensure_ci_task(gh: GitHub, target: str, open_issues: list[dict]) -> dict:
+    """Renvoie la tâche « ajouter une CI » du repo, en la créant au besoin."""
+    for issue in open_issues:
+        marker = MARKER_RE.search(issue.get("body") or "")
+        if marker and marker["repo"] == target and is_ci_task(issue):
+            return issue
+    content = "\n\n".join([
+        f"**Repo :** [{OWNER}/{target}](https://github.com/{OWNER}/{target}) · "
+        "**Catégorie :** Maintenance · **Type :** outillage · **Priorité :** haute · **Effort :** S",
+        "### Constat",
+        "Aucun workflow ne lance les tests sur les Pull Requests. Sans cette vérification, "
+        "l'agent ne peut merger automatiquement aucun changement dans ce repo.",
+        "### Proposition",
+        "- Ajouter `.github/workflows/ci.yml` déclenché sur `pull_request` et sur `push` vers la "
+        "branche principale, avec `permissions: contents: read`.\n"
+        "- Installer les dépendances du projet, lancer `ruff check` (règles de base) et `pytest`.\n"
+        "- S'il n'existe aucun test, ajouter un test de fumée qui importe les modules principaux.\n"
+        "- Ajouter `.github/dependabot.yml` (pip et github-actions, hebdomadaire).\n"
+        "- Ne modifier aucun workflow existant (collecte, publication…).",
+    ])
+    issue = gh.create_issue(PUBLIC_REPO, f"[{target}] Ajouter une CI (tests sur les Pull Requests)",
+                            compose_body(content, target, CI_ID, footer(True, "outillage", True)),
+                            ["audit", "auto", f"repo:{target}", "cat:maintenance",
+                             "type:outillage", "priorité:haute"])
+    issue.setdefault("labels", [{"name": "auto"}, {"name": "type:outillage"}])
+    issue.setdefault("user", {"login": OWNER})
+    issue.setdefault("title", f"[{target}] Ajouter une CI")
+    print(f"  + tâche CI créée pour {target}")
+    return issue
+
+
+def ci_first(gh: GitHub, state: dict, queue: list, open_issues: list[dict]) -> list:
+    """Dans un repo sans CI, seule la tâche « ajouter une CI » peut démarrer."""
+    cache: dict[str, bool] = {}
+    result, blocked = [], set()
+    for repo, issue, manual in queue:
+        marker = MARKER_RE.search(issue.get("body") or "")
+        target = marker["repo"] if marker else None
+        codable = "non-codable" not in labels_of(issue) and kind_of(labels_of(issue)) != "marche"
+        if not target or not codable or is_ci_task(issue) or has_pr_ci(gh, target, cache):
+            result.append((repo, issue, manual))
+            continue
+        blocked.add(target)
+        if manual and once(state, f"wait-ci:{repo}#{issue['number']}"):
+            gh.comment(repo, issue["number"], f"⏳ `{target}` n'a pas encore de CI : je l'ajoute "
+                       "d'abord, puis je lance cette tâche automatiquement.")
+    for target in sorted(blocked):
+        ci = ensure_ci_task(gh, target, open_issues)
+        if not labels_of(ci) & STOPPED and all(t[1]["number"] != ci["number"] for t in result):
+            result.insert(0, (PUBLIC_REPO, ci, False))
+    return result
+
+
 # --------------------------------------------------------------------------- PR en attente
 
 
@@ -636,8 +720,9 @@ def main() -> None:
                     queue.append((repo, issue, True))
                 elif "auto" in labels and not labels & STOPPED:
                     queue.append((repo, issue, False))
-        # Sécurité d'abord, puis les décisions du propriétaire, puis le reste.
+        # CI d'abord, puis sécurité, puis les décisions du propriétaire, puis le reste.
         queue.sort(key=lambda t: (t[0] != SECURITY_REPO, not t[2], t[1]["number"]))
+        queue = ci_first(gh, state, queue, issues[PUBLIC_REPO])
         print(f"\n— {len(queue)} tâche(s) à démarrer")
         started = 0
         for repo, issue, manual in queue:
