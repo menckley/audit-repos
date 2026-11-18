@@ -139,6 +139,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "settlements-eex",
+      "number": 1,
+      "url": "https://github.com/menckley/settlements-eex/pull/1",
+      "branch": "agent/dependances-non-epinglees-et-ci-tests",
+      "title": "[settlements-eex] Dépendances non épinglées, pas de CI de tests/lint, actions non épinglées par SHA",
+      "issue_repo": "audit-repos",
+      "issue": 53,
+      "security": false,
+      "opened": "2026-11-18T09:36:31+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
