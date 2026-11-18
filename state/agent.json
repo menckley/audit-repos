@@ -1,20 +1,5 @@
 {
-  "pending": [
-    {
-      "target": "settlements-eex",
-      "number": 8,
-      "url": "https://github.com/menckley/settlements-eex/pull/8",
-      "branch": "agent/alertes-seuils-et-courbe-gaz",
-      "title": "[settlements-eex] Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
-      "issue_repo": "audit-repos",
-      "issue": 52,
-      "security": false,
-      "opened": "2026-11-18T16:45:58+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    }
-  ],
+  "pending": [],
   "watch": [
     {
       "target": "newsletter",
@@ -334,6 +319,16 @@
       "title": "[newsletter] Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
       "issue_repo": "audit-repos",
       "issue": 23,
+      "security": false
+    },
+    {
+      "target": "settlements-eex",
+      "sha": "41b07ecaa1aedd5413ba19abc7981be59e06c5bd",
+      "merged": "2026-11-18T16:49:01+00:00",
+      "pr": "https://github.com/menckley/settlements-eex/pull/8",
+      "title": "[settlements-eex] Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
+      "issue_repo": "audit-repos",
+      "issue": 52,
       "security": false
     }
   ],
@@ -833,6 +828,16 @@
       "issue": "https://github.com/menckley/audit-repos/issues/23",
       "security": false,
       "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:49:01+00:00",
+      "reported": false,
+      "title": "[settlements-eex] Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
+      "pr": "https://github.com/menckley/settlements-eex/pull/8",
+      "issue": "https://github.com/menckley/audit-repos/issues/52",
+      "security": false,
+      "repo": "settlements-eex"
     }
   ],
   "last_bilan": "2026-11-18T15:39:18+00:00",
