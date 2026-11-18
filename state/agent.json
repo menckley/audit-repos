@@ -13,6 +13,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "settlements-eex",
+      "number": 5,
+      "url": "https://github.com/menckley/settlements-eex/pull/5",
+      "branch": "agent/jeton-donnees-portee-etape-commit",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 7,
+      "security": true,
+      "opened": "2026-11-18T09:52:46+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
