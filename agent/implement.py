@@ -33,7 +33,7 @@ READ_TOOLS = ["Read", "Glob", "Grep", "WebSearch", "WebFetch",
 CODE_TOOLS = READ_TOOLS + [
     "Edit", "Write",
     "Bash(git status:*)", "Bash(git diff:*)", "Bash(git add:*)", "Bash(git commit:*)",
-    "Bash(git mv:*)", "Bash(git rm:*)", "Bash(mkdir:*)",
+    "Bash(git mv:*)", "Bash(git rm:*)", "Bash(mkdir:*)", "Bash(git ls-remote:*)",
     "Bash(pip install:*)", "Bash(python -m pip install:*)", "Bash(python -m pytest:*)",
     "Bash(pytest:*)", "Bash(python:*)", "Bash(ruff:*)",
 ]
