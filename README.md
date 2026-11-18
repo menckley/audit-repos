@@ -3,6 +3,13 @@
 Agent d'audit et de maintenance de mes repos GitHub publics, propulsé par Claude Code
 (abonnement Pro).
 
+## Deux rôles
+
+- **🔍 L'Auditeur** (workflow `audit.yml`) : le 1er du mois, il lit et analyse chaque repo sans rien modifier, puis écrit les propositions et le récap.
+- **🛠️ Le Développeur** (workflow `implement.yml`) : toutes les heures, et dès que je coche une case, il code, ouvre les PR, merge si la CI est verte, surveille, annule si besoin et rédige le bilan.
+
+Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développeur les traite.
+
 ## Fonctionnement
 
 ```
@@ -77,9 +84,9 @@ Secrets du repo (*Settings → Secrets and variables → Actions*) :
 
 ## Lancer à la main
 
-- *Actions → Audit mensuel → Run workflow* : audit complet (`repos` vide) ou d'un seul
+- *Actions → 🔍 Auditeur → Run workflow* : audit complet (`repos` vide) ou d'un seul
   repo (`repos` = `pricer`, récap marqué « test »).
-- *Actions → Agent → Run workflow* : fait avancer le travail sans attendre l'heure suivante.
+- *Actions → 🛠️ Développeur → Run workflow* : fait avancer le travail sans attendre l'heure suivante.
 
 ## Réglages
 

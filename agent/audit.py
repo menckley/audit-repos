@@ -262,7 +262,7 @@ def recap_body(state: dict, test: bool) -> str:
     done = [n for n, r in repos.items() if r["status"] == "done"]
     missing = [n for n, r in repos.items() if r["status"] != "done"]
 
-    lines = [f"@{OWNER} voici le récap de l'audit de **{month_name}**{' (test)' if test else ''}.",
+    lines = [f"@{OWNER} ici l'Auditeur 🔍 : voici le récap de l'audit de **{month_name}**{' (test)' if test else ''}.",
              "",
              f"**{len(done)} repo(s) audité(s)** · **{len(items)} nouvelle(s) proposition(s)** "
              f"dont {len(security)} de sécurité.", "",
@@ -310,7 +310,7 @@ def recap_body(state: dict, test: bool) -> str:
         lines += ["", "## ⚠️ Repos non audités ce mois-ci"]
         lines += [f"- `{n}` : {repos[n].get('error') or 'quota épuisé avant la fin'}" for n in missing]
 
-    lines += ["", "_Récap généré automatiquement par l'agent d'audit (Claude Code)._"]
+    lines += ["", "_— 🔍 L'Auditeur (Claude Code)_"]
     return "\n".join(lines)
 
 

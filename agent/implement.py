@@ -230,7 +230,7 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
     footer_lines = ["", "---"]
     if issue_ref:
         footer_lines.append(f"Closes {issue_ref}")
-    footer_lines.append("🤖 Préparée par l'agent d'audit (Claude Code). Mergée automatiquement "
+    footer_lines.append("🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement "
                         "si la CI est verte.")
     full_body = (body or "_(pas de description)_") + "\n" + "\n".join(footer_lines)
     return gh.open_pr_for(target, branch) or gh.create_pr(
@@ -603,7 +603,7 @@ def revert(gh: GitHub, state: dict, entry: dict, run: dict) -> None:
         pr = gh.open_pr_for(target, branch) or gh.create_pr(
             target, branch, base, f"revert: {entry['title']}"[:250],
             f"Annulation automatique de {entry['pr']} : {reason}.\n\n"
-            "🤖 Agent d'audit (Claude Code).")
+            "🛠️ Le Développeur (Claude Code).")
         for attempt in range(6):  # GitHub met quelques secondes à rendre la PR mergeable
             try:
                 gh.merge_pr(target, pr["number"], f"revert: {entry['title']}"[:200])
@@ -662,12 +662,12 @@ def bilan_body(entries: list[dict]) -> str:
     ]
     merged = len(by("merged")) + len(by("dependabot_merged"))
     attention = len(by("human")) + len(by("reverted")) + len(by("revert_failed")) + len(by("review"))
-    lines = [f"@{OWNER} voici le bilan du travail automatique.", "",
+    lines = [f"@{OWNER} ici le Développeur 🛠️ : voici le bilan de mon travail.", "",
              f"**{merged} changement(s) mergé(s)** · **{attention} point(s) demandant ton attention**."]
     for title, items, fmt in sections:
         if items:
             lines += ["", f"## {title}"] + [fmt(e) for e in items]
-    lines += ["", "_Bilan généré automatiquement par l'agent d'audit (Claude Code)._"]
+    lines += ["", "_— 🛠️ Le Développeur (Claude Code)_"]
     return "\n".join(lines)
 
 
