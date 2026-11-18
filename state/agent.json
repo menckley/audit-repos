@@ -1,71 +1,15 @@
 {
   "pending": [
     {
-      "target": "power-hpfc",
-      "number": 4,
-      "url": "https://github.com/menckley/power-hpfc/pull/4",
-      "branch": "agent/tarball-extraction-confiance",
-      "title": "Correctif de sécurité",
-      "issue_repo": "audit-securite",
-      "issue": 5,
-      "security": true,
-      "opened": "2026-11-18T09:51:51+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "settlements-eex",
+      "target": "menckleys-projects",
       "number": 5,
-      "url": "https://github.com/menckley/settlements-eex/pull/5",
-      "branch": "agent/jeton-donnees-portee-etape-commit",
-      "title": "Correctif de sécurité",
-      "issue_repo": "audit-securite",
-      "issue": 7,
-      "security": true,
-      "opened": "2026-11-18T09:52:46+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "power-hpfc",
-      "number": 5,
-      "url": "https://github.com/menckley/power-hpfc/pull/5",
-      "branch": "agent/daily-sans-alerte-echec",
-      "title": "[power-hpfc] Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
+      "url": "https://github.com/menckley/menckleys-projects/pull/5",
+      "branch": "agent/pricers-en-module-python-teste",
+      "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
       "issue_repo": "audit-repos",
-      "issue": 25,
+      "issue": 10,
       "security": false,
-      "opened": "2026-11-18T09:54:00+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "power-hpfc",
-      "number": 6,
-      "url": "https://github.com/menckley/power-hpfc/pull/6",
-      "branch": "agent/dependances-non-verrouillees",
-      "title": "[power-hpfc] Dépendances sans borne haute ni lockfile (run quotidien et app)",
-      "issue_repo": "audit-repos",
-      "issue": 28,
-      "security": false,
-      "opened": "2026-11-18T09:55:43+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "power-hpfc",
-      "number": 7,
-      "url": "https://github.com/menckley/power-hpfc/pull/7",
-      "branch": "agent/documentation-exploitation",
-      "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
-      "issue_repo": "audit-repos",
-      "issue": 35,
-      "security": false,
-      "opened": "2026-11-18T09:56:59+00:00",
+      "opened": "2026-11-18T10:07:03+00:00",
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
@@ -260,6 +204,56 @@
       "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
       "issue_repo": null,
       "issue": null,
+      "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "1fce310559017cab9d2af0aa09d2f080013d196d",
+      "merged": "2026-11-18T10:04:20+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/4",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 5,
+      "security": true
+    },
+    {
+      "target": "settlements-eex",
+      "sha": "03262f933da0720ac8473943b4feac322cfe767a",
+      "merged": "2026-11-18T10:04:33+00:00",
+      "pr": "https://github.com/menckley/settlements-eex/pull/5",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 7,
+      "security": true
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "201ee76e6773d696836bb59071c6ec0382268bef",
+      "merged": "2026-11-18T10:04:47+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/5",
+      "title": "[power-hpfc] Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
+      "issue_repo": "audit-repos",
+      "issue": 25,
+      "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "3a0b02dd4986ed596c4e310c6cd7e10411bff21a",
+      "merged": "2026-11-18T10:05:00+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/6",
+      "title": "[power-hpfc] Dépendances sans borne haute ni lockfile (run quotidien et app)",
+      "issue_repo": "audit-repos",
+      "issue": 28,
+      "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "2ba536565ad8a963b76700b19ae1f5efe7027abb",
+      "merged": "2026-11-18T10:05:14+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/7",
+      "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
+      "issue_repo": "audit-repos",
+      "issue": 35,
       "security": false
     }
   ],
@@ -507,6 +501,56 @@
       "title": "Bump python-dateutil from 2.9.0.post0 to 4.0.0",
       "pr": "https://github.com/menckley/settlements-eex/pull/4",
       "repo": "settlements-eex"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T10:04:20+00:00",
+      "reported": false,
+      "title": "Correctif de sécurité",
+      "pr": "https://github.com/menckley/power-hpfc/pull/4",
+      "issue": "https://github.com/menckley/audit-securite/issues/5",
+      "security": true,
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T10:04:33+00:00",
+      "reported": false,
+      "title": "Correctif de sécurité",
+      "pr": "https://github.com/menckley/settlements-eex/pull/5",
+      "issue": "https://github.com/menckley/audit-securite/issues/7",
+      "security": true,
+      "repo": "settlements-eex"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T10:04:47+00:00",
+      "reported": false,
+      "title": "[power-hpfc] Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
+      "pr": "https://github.com/menckley/power-hpfc/pull/5",
+      "issue": "https://github.com/menckley/audit-repos/issues/25",
+      "security": false,
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T10:05:00+00:00",
+      "reported": false,
+      "title": "[power-hpfc] Dépendances sans borne haute ni lockfile (run quotidien et app)",
+      "pr": "https://github.com/menckley/power-hpfc/pull/6",
+      "issue": "https://github.com/menckley/audit-repos/issues/28",
+      "security": false,
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T10:05:14+00:00",
+      "reported": false,
+      "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
+      "pr": "https://github.com/menckley/power-hpfc/pull/7",
+      "issue": "https://github.com/menckley/audit-repos/issues/35",
+      "security": false,
+      "repo": "power-hpfc"
     }
   ],
   "last_bilan": null,
