@@ -55,6 +55,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "power-hpfc",
+      "number": 7,
+      "url": "https://github.com/menckley/power-hpfc/pull/7",
+      "branch": "agent/documentation-exploitation",
+      "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
+      "issue_repo": "audit-repos",
+      "issue": 35,
+      "security": false,
+      "opened": "2026-11-18T09:56:59+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
