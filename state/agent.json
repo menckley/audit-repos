@@ -69,6 +69,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "newsletter",
+      "number": 7,
+      "url": "https://github.com/menckley/newsletter/pull/7",
+      "branch": "agent/aucun-test-ni-ci",
+      "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
+      "issue_repo": "audit-repos",
+      "issue": 18,
+      "security": false,
+      "opened": "2026-11-18T09:18:57+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
