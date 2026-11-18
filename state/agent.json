@@ -1,0 +1,22 @@
+{
+  "pending": [
+    {
+      "target": "newsletter",
+      "number": 1,
+      "url": "https://github.com/menckley/newsletter/pull/1",
+      "branch": "agent/ci-pull-requests",
+      "title": "[newsletter] Ajouter une CI (tests sur les Pull Requests)",
+      "issue_repo": "audit-repos",
+      "issue": 61,
+      "security": false,
+      "opened": "2026-11-18T07:51:52+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
+    }
+  ],
+  "watch": [],
+  "log": [],
+  "last_bilan": null,
+  "seen": []
+}
