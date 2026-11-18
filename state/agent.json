@@ -41,6 +41,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "power-hpfc",
+      "number": 6,
+      "url": "https://github.com/menckley/power-hpfc/pull/6",
+      "branch": "agent/dependances-non-verrouillees",
+      "title": "[power-hpfc] Dépendances sans borne haute ni lockfile (run quotidien et app)",
+      "issue_repo": "audit-repos",
+      "issue": 28,
+      "security": false,
+      "opened": "2026-11-18T09:55:43+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
