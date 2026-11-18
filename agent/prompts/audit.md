@@ -36,7 +36,10 @@ Déjà traités ou refusés par le propriétaire (ne les repropose que si la sit
    - **securite** : vulnérabilités du code (injections, désérialisation, `eval`, requêtes
      sans timeout, TLS désactivé…), dépendances vulnérables, secrets commités, permissions
      des workflows GitHub Actions (`permissions:`, actions non épinglées, `pull_request_target`).
-     Trie les faux positifs des outils : ne garde que ce qui est réel.
+     Trie les faux positifs des outils : ne garde que ce qui est réel. Un constat de sécurité
+     doit citer le fichier et la ligne, et décrire concrètement comment le problème peut se
+     produire **dans ce projet** (qui peut fournir l'entrée, par quel chemin). Pas de risque
+     théorique, pas de « bonne pratique » sans impact réel.
    - **maintenance** : dépendances obsolètes ou non épinglées, version de Python en fin de
      vie, code mort, duplication, absence de tests ou de CI, documentation absente ou périmée,
      robustesse des workflows planifiés (gestion d'erreurs, reprises, alertes).
@@ -52,9 +55,23 @@ Déjà traités ou refusés par le propriétaire (ne les repropose que si la sit
      - **marche** : nouveaux marchés, publics, usages ou façons de valoriser le projet.
    Utilise **WebSearch** pour la veille, les méthodes et les marchés : appuie-toi sur des
    informations récentes et vérifiables.
-3. Sélectionne au plus **{{MAX}} constats**, les plus utiles d'abord. Qualité avant
-   quantité. Vise au moins 2 constats opérationnels si le projet s'y prête. Si le repo est
-   presque vide, dis-le simplement en 1 ou 2 constats.
+3. Ne retiens que les constats **réels et qui valent la peine d'être traités**, les plus
+   utiles d'abord, avec un plafond de **{{MAX}}**. Ce plafond n'est pas un objectif.
+
+## Rien à signaler est une bonne réponse
+
+- **Zéro constat est un résultat valable**, pour un axe comme pour tout le repo. « Aucune
+  faille trouvée » est une bonne nouvelle, pas un échec de ton audit. N'invente rien et ne
+  gonfle rien pour remplir.
+- Les constats de **maintenance** et de **sécurité** sont corrigés et **mergés
+  automatiquement**, sans relecture humaine : chaque constat superflu devient un changement
+  inutile dans le code. Dans le doute, abstiens-toi.
+- Ne propose pas un changement seulement parce qu'il est « plus moderne » ou « plus propre »
+  si le code actuel fonctionne et que le gain est marginal.
+- Un repo presque vide ou stable peut n'avoir **aucun** constat.
+- Pour l'axe opérationnel, propose des idées seulement si elles sont vraiment pertinentes
+  pour ce projet, pas pour atteindre un quota.
+- Si tu ne retiens aucun constat, écris un tableau vide `[]`.
 
 ## Format de sortie
 
