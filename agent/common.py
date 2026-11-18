@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,18 +30,80 @@ SECRET_ENV = ("GH_PAT", "GITHUB_TOKEN", "GH_TOKEN")
 
 LABEL_COLORS = {
     "audit": "5319e7",
+    "auto": "0e8a16",
     "à-valider": "fbca04",
     "approuvé": "0e8a16",
     "refusé": "b60205",
     "en-cours": "1d76db",
     "pr-ouverte": "0052cc",
-    "spec-en-revue": "c5def5",
+    "mergé": "6f42c1",
+    "annulé": "b60205",
+    "à-relire": "d93f0b",
     "analyse-livrée": "bfdadc",
     "à-préciser": "d93f0b",
     "échec": "b60205",
     "non-codable": "ededed",
     "récap": "000000",
+    "bilan": "000000",
 }
+
+# --------------------------------------------------------------------------- décisions
+# Les tâches d'amélioration et opérationnelles se valident en cochant une case dans
+# l'issue. Maintenance et sécurité (hors gros changements) sont traitées seules.
+
+V2 = "<!-- v2 -->"
+DECISION_START = "<!-- decision -->"
+DECISION_END = "<!-- /decision -->"
+LAUNCH_RE = re.compile(r"- \[[xX]\] ✅ \*\*Lancer\*\*")
+REFUSE_RE = re.compile(r"- \[[xX]\] ❌ \*\*Refuser\*\*")
+
+
+def is_auto(categorie: str, effort: str, majeur: bool) -> bool:
+    return (categorie in CONFIG["auto_categories"] and effort in CONFIG["auto_efforts"]
+            and not majeur)
+
+
+def decision_block(what: str) -> str:
+    return "\n".join([
+        DECISION_START,
+        "**Ta décision** (un clic suffit) :",
+        "",
+        f"- [ ] ✅ **Lancer** : {what}",
+        "- [ ] ❌ **Refuser** : l'issue est fermée et ne sera plus proposée",
+        "",
+        "💬 Des précisions ? Écris un commentaire **avant** de cocher : l'agent le lira.",
+        DECISION_END,
+    ])
+
+
+def footer(auto: bool, kind: str, codable: bool) -> str:
+    if auto:
+        return ("🤖 **Traitée automatiquement** : l'agent ouvre une Pull Request, la merge si "
+                "la CI est verte et l'annule si un workflow du repo échoue ensuite. "
+                "Rien à faire de ton côté.")
+    if not codable:
+        what = "l'agent approfondit l'analyse et la poste ici en commentaire (aucun code)"
+    elif kind == "fonctionnalite":
+        what = ("l'agent rédige la spécification, code la fonctionnalité avec ses tests "
+                "et merge si la CI est verte")
+    else:
+        what = "l'agent réalise la tâche et merge si la CI est verte"
+    return decision_block(what)
+
+
+def set_decision(body: str, replacement: str) -> str:
+    """Remplace le bloc de décision (ou l'ajoute avant les marqueurs s'il manque)."""
+    start, end = body.find(DECISION_START), body.find(DECISION_END)
+    if start != -1 and end != -1:
+        return body[:start] + replacement + body[end + len(DECISION_END):]
+    marker = MARKER_RE.search(body)
+    if marker:
+        return body[:marker.start()] + replacement + "\n\n" + body[marker.start():]
+    return body + "\n\n" + replacement
+
+
+def compose_body(content: str, repo: str, finding_id: str, foot: str) -> str:
+    return f"{content}\n\n---\n\n{foot}\n\n<!-- audit-finding: {repo}/{finding_id} -->\n{V2}"
 
 
 def tmp_dir(*parts: str) -> Path:
@@ -201,6 +264,45 @@ class GitHub:
         return self.write("POST", f"/repos/{OWNER}/{repo}/pulls",
                           {"title": title[:250], "head": branch, "base": base, "body": body})
 
+    def pull(self, repo: str, number: int) -> dict:
+        return self.get(f"/repos/{OWNER}/{repo}/pulls/{number}")
+
+    def open_pulls(self, repo: str) -> list[dict]:
+        return list(self.paginate(f"/repos/{OWNER}/{repo}/pulls", state="open"))
+
+    def merge_pr(self, repo: str, number: int, title: str) -> dict:
+        return self.write("PUT", f"/repos/{OWNER}/{repo}/pulls/{number}/merge",
+                          {"merge_method": "squash", "commit_title": f"{title} (#{number})"})
+
+    def update_branch(self, repo: str, number: int) -> None:
+        self.write("PUT", f"/repos/{OWNER}/{repo}/pulls/{number}/update-branch", {})
+
+    def delete_branch(self, repo: str, branch: str) -> None:
+        try:
+            self.write("DELETE", f"/repos/{OWNER}/{repo}/git/refs/heads/{branch}")
+        except GitHubError as exc:
+            if exc.status not in (404, 422):
+                raise
+
+    def update_issue(self, repo: str, number: int, **fields) -> None:
+        self.write("PATCH", f"/repos/{OWNER}/{repo}/issues/{number}", fields)
+
+    def close_issue(self, repo: str, number: int, reason: str = "completed") -> None:
+        self.update_issue(repo, number, state="closed", state_reason=reason)
+
+    # --- CI (lecture publique sur les repos publics)
+    def check_runs(self, repo: str, sha: str) -> list[dict]:
+        return self.get(f"/repos/{OWNER}/{repo}/commits/{sha}/check-runs",
+                        per_page=100)["check_runs"]
+
+    def annotations(self, repo: str, check_run_id: int) -> list[dict]:
+        return self.get(f"/repos/{OWNER}/{repo}/check-runs/{check_run_id}/annotations",
+                        per_page=50) or []
+
+    def workflow_runs(self, repo: str, **params) -> list[dict]:
+        return self.get(f"/repos/{OWNER}/{repo}/actions/runs", per_page=100,
+                        **params)["workflow_runs"]
+
 
 # --------------------------------------------------------------------------- Claude
 
@@ -272,6 +374,30 @@ def scrub(text: str) -> str:
         if value:
             text = text.replace(value, "***")
     return text
+
+
+def commit_state(paths: list[Path], message: str) -> None:
+    """Commite des fichiers d'état dans ce repo et les pousse avec le token du bot."""
+    if DRY_RUN:
+        return
+    token = os.environ["GITHUB_TOKEN"]
+    url = f"https://x-access-token:{token}@github.com/{OWNER}/{PUBLIC_REPO}.git"
+    sh("git", "config", "user.name", "github-actions[bot]", cwd=ROOT)
+    sh("git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com", cwd=ROOT)
+    for path in paths:
+        sh("git", "add", str(path), cwd=ROOT)
+    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode == 0:
+        return
+    sh("git", "commit", "-q", "-m", message, cwd=ROOT)
+    for attempt in range(3):  # l'audit et l'agent peuvent pousser en même temps
+        try:
+            sh("git", "pull", "-q", "--rebase", url, "main", cwd=ROOT)
+            sh("git", "push", "-q", url, "HEAD:main", cwd=ROOT)
+            return
+        except RuntimeError:
+            if attempt == 2:
+                raise
+            time.sleep(10)
 
 
 def fresh_clone(repo: str, dest: Path) -> Path:

@@ -74,10 +74,20 @@ Déjà traités ou refusés par le propriétaire (ne les repropose que si la sit
     "risques": "Impacts, risques de régression, points de vigilance.",
     "fichiers": ["chemin/relatif.py"],
     "sources": ["https://… (pour la veille, les méthodes, les marchés, les CVE)"],
-    "codable": true
+    "codable": true,
+    "majeur": false,
+    "action_humaine": ""
   }
 ]
 ```
+
+- `majeur` : `true` si le changement est risqué même s'il est petit : montée de version
+  **majeure** d'une bibliothèque ou de Python, modification d'un workflow de collecte de
+  données ou d'une tâche planifiée, changement de format de données ou d'interface publique.
+  Les constats de maintenance et de sécurité non majeurs (effort XS, S ou M) sont
+  **corrigés et mergés automatiquement** : sois donc précis sur ce point.
+- `action_humaine` : ce que **seul le propriétaire** peut faire, hors du code. Par exemple,
+  révoquer et régénérer un secret commité chez le fournisseur concerné. Vide sinon.
 
 - `id` : stable d'un mois à l'autre pour un même sujet (ex. `requests-sans-timeout`).
 - `codable` : `false` si la proposition ne se traduit pas directement par du code

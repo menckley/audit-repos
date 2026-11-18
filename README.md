@@ -1,9 +1,7 @@
 # audit-repos
 
-Agent d'audit mensuel de mes repos GitHub publics, propulsé par Claude Code (abonnement Pro).
-
-L'agent **n'agit jamais sans validation** : il propose, je valide tâche par tâche, il
-ouvre une Pull Request, et **je reste seul à merger**.
+Agent d'audit et de maintenance de mes repos GitHub publics, propulsé par Claude Code
+(abonnement Pro).
 
 ## Fonctionnement
 
@@ -12,49 +10,61 @@ ouvre une Pull Request, et **je reste seul à merger**.
                  · sécurité · maintenance · améliorations · opérationnel (fonctionnalités,
                    veille technique, méthodes, marchés)
                        │
-                       ├─► une issue par proposition (ce repo, publique)
-                       ├─► une issue par faille de sécurité (repo privé audit-securite)
-                       └─► une issue « Récap » → e-mail de GitHub
-                                │
-Je pose le label `approuvé` ────┘
-                       │
+        ┌──────────────┴───────────────┐
+        ▼                              ▼
+ Maintenance + sécurité         Amélioration + opérationnel
+ (sauf changements majeurs)     (et changements majeurs)
+        │                              │
+   🤖 automatique              ☑️ je coche « Lancer » (+ commentaire facultatif)
+        │                              │
+        └──────────────┬───────────────┘
                        ▼
-Agent : branche dédiée, code + tests, commits propres ──► Pull Request ──► je relis et merge
+     Agent : branche, code + tests ──► PR ──► CI verte ? ──► merge automatique
+                                                  │ rouge : 1 tentative de correction,
+                                                  │ sinon PR laissée ouverte pour moi
+                                                  ▼
+                       Surveillance 48 h : si un workflow du repo casse ──► annulation
+                                                  ▼
+                              🛠️ Bilan détaillé par e-mail
 ```
 
-- **Quota Pro** : les repos sont audités un par un. Si le quota s'épuise, le passage
-  suivant (toutes les 5 h environ, du 1er au 4) reprend là où il s'était arrêté.
-  L'avancement est dans `state/AAAA-MM.json`.
-- **Tâches validées** : traitées dès la pose du label (ce repo) ou au passage suivant,
-  toutes les 3 h (repo de sécurité, reprises après quota).
+## Ce que je reçois par e-mail
 
-## Valider ou refuser
+- **📋 Récap d'audit** (début de mois) : ce qui sera traité automatiquement et ce qui
+  attend ma décision.
+- **🛠️ Bilan automatique**, une fois le travail terminé (au plus un toutes les 12 h) :
+  ce qui a été mergé, annulé, ce qui demande mon attention, et les actions hors code
+  que je suis seul à pouvoir faire (ex. révoquer un secret).
 
-| Je veux… | Je fais… |
-|---|---|
-| Valider une tâche | label `approuvé` |
-| Refuser une tâche | fermer l'issue (elle ne sera plus reproposée) |
-| Donner des précisions | un commentaire **avant** de poser `approuvé` |
-| Réessayer après un échec | remettre `approuvé` |
+## Décider d'une proposition
 
-Selon le type de tâche :
+Chaque proposition d'amélioration ou opérationnelle se termine par :
 
-- **Correctif, refactoring, dépendances…** → une PR de code avec tests.
-- **Nouvelle fonctionnalité** → d'abord une PR de **spécification** (`docs/specs/`).
-  Je la merge si elle me convient, puis je remets `approuvé` pour lancer le code.
-- **Marché, stratégie** (`non-codable`) → une analyse détaillée, sourcée, postée en commentaire.
+- [ ] ✅ **Lancer** : l'agent la réalise et merge si la CI est verte
+- [ ] ❌ **Refuser** : l'issue est fermée et ne sera plus proposée
 
-Labels de suivi : `à-valider` → `en-cours` → `pr-ouverte` / `spec-en-revue` /
-`analyse-livrée`, ou `à-préciser` (l'agent pose des questions) / `échec`.
+Un clic suffit. Pour ajouter des précisions, j'écris un commentaire **avant** de cocher :
+l'agent le lit et le fait passer avant la proposition initiale.
 
-## Sécurité
+Une nouvelle fonctionnalité commence par sa spécification (`docs/specs/`), commitée dans
+la même PR que le code. Une piste de marché donne une analyse sourcée en commentaire,
+sans code.
 
-- Les failles ne sont jamais publiées ici : elles vont dans le repo **privé**
-  `audit-securite`. Le récap public n'en donne que le nombre.
-- Les tokens GitHub ne sont jamais transmis à Claude. C'est le script qui pousse les
-  branches et ouvre les PR.
-- Seules les issues créées avec mon compte et labellisées par moi déclenchent l'agent.
-- L'agent ne merge jamais et ne pousse jamais sur `main`.
+## Garde-fous
+
+- **Merge automatique seulement si la CI est verte.** Sans CI dans le repo, la PR reste
+  ouverte et l'agent me le signale.
+- **Une seule tentative de correction** d'une CI rouge, sans jamais supprimer ni affaiblir
+  un test.
+- **Annulation automatique** si un workflow de la branche principale (collecte,
+  newsletter, CI…) échoue dans les 48 h après un merge de l'agent alors qu'il passait avant.
+- **Changements majeurs** (version majeure d'une bibliothèque ou de Python, workflow de
+  collecte, format de données) et efforts L/XL : toujours soumis à ma décision.
+- **Failles de sécurité** : détails uniquement dans le repo privé `audit-securite`.
+- **Dependabot** : mises à jour non majeures mergées si la CI est verte, une par repo et
+  par heure. Les versions majeures restent à ma décision.
+- Les tokens GitHub ne sont jamais transmis à Claude. Seules les issues créées par mon
+  compte, et mes propres clics, déclenchent l'agent.
 
 ## Installation (une seule fois)
 
@@ -67,12 +77,12 @@ Secrets du repo (*Settings → Secrets and variables → Actions*) :
 
 ## Lancer à la main
 
-*Actions → Audit mensuel → Run workflow* :
-
-- `repos` = `pricer` : audit de test sur un seul repo (récap marqué « test »).
-- `force` : relancer tout l'audit du mois.
+- *Actions → Audit mensuel → Run workflow* : audit complet (`repos` vide) ou d'un seul
+  repo (`repos` = `pricer`, récap marqué « test »).
+- *Actions → Agent → Run workflow* : fait avancer le travail sans attendre l'heure suivante.
 
 ## Réglages
 
-`config.json` : repos exclus, modèle, nombre maximal de propositions par repo, nombre de
-tâches par passage. Les consignes de l'agent sont dans `agent/prompts/`.
+`config.json` : catégories et efforts traités automatiquement, durée de surveillance,
+intervalle minimal entre deux bilans, Dependabot, repos exclus, modèle. Les consignes de
+l'agent sont dans `agent/prompts/`. L'état de l'agent est dans `state/`.

@@ -13,9 +13,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from common import (CONFIG, DRY_RUN, MARKER_RE, OWNER, PUBLIC_REPO, ROOT, SECURITY_REPO,
-                    GitHub, QuotaExhausted, fresh_clone, render, run_claude, sh, tmp_dir,
-                    truncate)
+from common import (CONFIG, MARKER_RE, OWNER, PUBLIC_REPO, ROOT, SECURITY_REPO, GitHub,
+                    QuotaExhausted, commit_state, compose_body, footer, fresh_clone, is_auto,
+                    render, run_claude, sh, tmp_dir, truncate)
 
 CATEGORIES = {"securite", "maintenance", "amelioration", "operationnel"}
 TYPES = {"correctif", "refactoring", "tests", "documentation", "outillage", "dependances",
@@ -48,21 +48,12 @@ def load_state(month: str) -> dict:
 
 
 def save_state(state: dict, persist: bool) -> None:
+    if not persist:  # audit de test : aucun état enregistré
+        return
     path = state_path(state["month"])
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    if not persist or DRY_RUN:
-        return
-    sh("git", "add", str(path), cwd=ROOT)
-    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode == 0:
-        return
-    sh("git", "-c", "user.name=github-actions[bot]",
-       "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
-       "commit", "-q", "-m", f"chore(audit): état {state['month']}", cwd=ROOT)
-    # Checkout sans identifiants persistés : on pousse explicitement avec le token du bot.
-    token = os.environ["GITHUB_TOKEN"]
-    sh("git", "push", "-q", f"https://x-access-token:{token}@github.com/{OWNER}/{PUBLIC_REPO}.git",
-       "HEAD:main", cwd=ROOT)
+    commit_state([path], f"chore(audit): état {state['month']}")
 
 
 # --------------------------------------------------------------------------- analyse statique
@@ -163,7 +154,10 @@ def validate(raw, repo: str, known_ids: set[str]) -> list[dict]:
             "fichiers": [str(x) for x in item.get("fichiers") or []][:15],
             "sources": [str(x) for x in item.get("sources") or []][:10],
             "codable": bool(item.get("codable", True)) and item.get("type") != "marche",
+            "majeur": bool(item.get("majeur", False)),
+            "action_humaine": str(item.get("action_humaine") or "").strip(),
         }
+        f["auto"] = f["codable"] and is_auto(f["categorie"], f["effort"], f["majeur"])
         if f["id"] in known_ids or f["id"] in seen:
             continue
         seen.add(f["id"])
@@ -186,22 +180,12 @@ def issue_body(repo: str, f: dict) -> str:
         parts += ["### Fichiers concernés", "\n".join(f"- `{x}`" for x in f["fichiers"])]
     if f["sources"]:
         parts += ["### Sources", "\n".join(f"- {x}" for x in f["sources"])]
-    if f["type"] == "fonctionnalite":
-        then = ("l'agent ouvre d'abord une PR de **spécification**. Une fois la spec mergée, "
-                "remets `approuvé` pour lancer le code.")
-    elif not f["codable"]:
-        then = "l'agent approfondit l'analyse et la poste en commentaire (aucun code)."
-    else:
-        then = "l'agent ouvre une Pull Request dans le repo concerné. Tu restes seul à merger."
-    parts += [
-        "---",
-        f"✅ **Valider :** ajoute le label `approuvé` → {then}",
-        "❌ **Refuser :** ferme l'issue (avec le label `refusé` si tu veux). "
-        "Elle ne sera pas reproposée.",
-        "💬 Un commentaire de ta part avant validation est lu par l'agent (précisions, contraintes).",
-        f"<!-- audit-finding: {repo}/{f['id']} -->",
-    ]
-    return "\n\n".join(parts)
+    if f["action_humaine"]:
+        parts += ["### 👤 Action de ta part", f["action_humaine"]]
+    if f["majeur"] and f["categorie"] in CONFIG["auto_categories"]:
+        parts += ["_Changement majeur : soumis à ta décision malgré sa catégorie._"]
+    return compose_body("\n\n".join(parts), repo, f["id"],
+                        footer(f["auto"], f["type"], f["codable"]))
 
 
 def existing_findings(gh: GitHub) -> dict[str, dict[str, list[str]]]:
@@ -252,13 +236,14 @@ def publish(gh: GitHub, repo: str, findings: list[dict], month: str) -> list[dic
     created = []
     for f in findings:
         target = SECURITY_REPO if f["categorie"] == "securite" else PUBLIC_REPO
-        labels = ["audit", "à-valider", f"audit-{month}", f"repo:{repo}",
-                  f"cat:{f['categorie']}", f"type:{f['type']}", f"priorité:{f['priorite']}"]
+        labels = ["audit", "auto" if f["auto"] else "à-valider", f"audit-{month}",
+                  f"repo:{repo}", f"cat:{f['categorie']}", f"type:{f['type']}",
+                  f"priorité:{f['priorite']}"]
         if not f["codable"]:
             labels.append("non-codable")
         issue = gh.create_issue(target, f"[{repo}] {f['titre']}", issue_body(repo, f), labels)
         created.append({"repo": target, "number": issue["number"], "url": issue["html_url"],
-                        "title": f["titre"], "categorie": f["categorie"],
+                        "title": f["titre"], "categorie": f["categorie"], "auto": f["auto"],
                         "priorite": f["priorite"], "effort": f["effort"]})
         print(f"  + {target}#{issue['number']} [{f['categorie']}] {f['titre']}")
     return created
@@ -294,18 +279,28 @@ def recap_body(state: dict, test: bool) -> str:
     if security:
         by_prio = {p: sum(1 for i in security if i["priorite"] == p) for p in PRIORITIES}
         detail = ", ".join(f"{n} {p}" for p, n in by_prio.items() if n)
-        lines.append(f"{len(security)} constat(s) ({detail}), visibles uniquement par toi : "
+        auto_sec = sum(1 for i in security if i.get("auto"))
+        lines.append(f"{len(security)} constat(s) ({detail}), dont {auto_sec} pris en charge "
+                     "automatiquement. Détails visibles uniquement par toi : "
                      f"[ouvrir la liste](https://github.com/{OWNER}/{SECURITY_REPO}/issues?q="
-                     f"is%3Aopen+label%3Aaudit-{state['month']}). Les détails ne sont jamais "
-                     "publiés ici.")
+                     f"is%3Aopen+label%3Aaudit-{state['month']}).")
     else:
         lines.append("Aucun nouveau constat de sécurité.")
 
-    lines += ["", "## Propositions à valider"]
-    if not public:
+    auto = [i for i in public if i.get("auto")]
+    manual = [i for i in public if not i.get("auto")]
+    lines += ["", f"## 🤖 Traité automatiquement ({len(auto)})",
+              "L'agent s'en occupe seul : PR, merge si la CI est verte, annulation si un "
+              "workflow casse. Tu recevras un **bilan détaillé** une fois tout terminé."]
+    lines += [f"- #{i['number']} {i['title']}" for i in auto] or ["- (rien ce mois-ci)"]
+
+    lines += ["", f"## ☑️ À décider ({len(manual)})",
+              "Ouvre l'issue et coche **Lancer** ou **Refuser**. Un commentaire avant de cocher "
+              "permet d'ajouter des précisions."]
+    if not manual:
         lines.append("Aucune nouvelle proposition ce mois-ci.")
     for cat in ("maintenance", "amelioration", "operationnel"):
-        group = [i for i in public if i["categorie"] == cat]
+        group = [i for i in manual if i["categorie"] == cat]
         if group:
             lines += ["", f"### {CAT_LABEL[cat]}"]
             lines += [f"- #{i['number']} {i['title']} — priorité {i['priorite']}, effort {i['effort']}"
@@ -315,12 +310,7 @@ def recap_body(state: dict, test: bool) -> str:
         lines += ["", "## ⚠️ Repos non audités ce mois-ci"]
         lines += [f"- `{n}` : {repos[n].get('error') or 'quota épuisé avant la fin'}" for n in missing]
 
-    lines += ["", "## Comment valider",
-              "- **Valider** une tâche : label `approuvé` sur son issue. L'agent s'en charge "
-              "dans les 3 heures et ouvre une Pull Request.",
-              "- **Refuser** : ferme l'issue. Elle ne reviendra pas.",
-              "- **Merger** : toujours toi, après relecture de la PR.", "",
-              "_Récap généré automatiquement par l'agent d'audit (Claude Code)._"]
+    lines += ["", "_Récap généré automatiquement par l'agent d'audit (Claude Code)._"]
     return "\n".join(lines)
 
 
