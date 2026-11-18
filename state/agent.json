@@ -58,7 +58,17 @@
     }
   ],
   "watch": [],
-  "log": [],
+  "log": [
+    {
+      "type": "clarify",
+      "at": "2026-11-18T07:56:31+00:00",
+      "reported": false,
+      "title": "[pricer] Épingler les actions GitHub par SHA complet (TODO déjà présent dans ci.yml)",
+      "issue": "https://github.com/menckley/audit-securite/issues/6",
+      "security": true,
+      "detail": "## Contexte\n\nAucun commit n'a été fait : la tâche n'a pas pu être menée proprement.\n\nPour épingler `actions/checkout@v7` et `actions/setup-python@v7`, il faut les SHA de 40 caractères que ces tags désignent. L'environnement d'exécution a refusé tout accès réseau : `git ls-remote` et `gh api` ont tou\n[… tronqué, 1072 caractères de plus]"
+    }
+  ],
   "last_bilan": null,
   "seen": []
 }
