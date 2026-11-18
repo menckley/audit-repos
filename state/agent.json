@@ -27,6 +27,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "newsletter",
+      "number": 4,
+      "url": "https://github.com/menckley/newsletter/pull/4",
+      "branch": "agent/workflow-permissions-et-epinglage",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 4,
+      "security": true,
+      "opened": "2026-11-18T08:32:27+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
