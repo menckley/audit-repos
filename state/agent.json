@@ -125,6 +125,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "projet-ttf-geopolitique",
+      "number": 1,
+      "url": "https://github.com/menckley/projet-ttf-geopolitique/pull/1",
+      "branch": "agent/ci-github-actions-absente",
+      "title": "[projet-ttf-geopolitique] Ajouter une CI GitHub Actions (pytest + ruff)",
+      "issue_repo": "audit-repos",
+      "issue": 41,
+      "security": false,
+      "opened": "2026-11-18T09:35:29+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
