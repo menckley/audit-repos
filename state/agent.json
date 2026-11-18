@@ -173,6 +173,26 @@
       "issue_repo": "audit-repos",
       "issue": 3,
       "security": false
+    },
+    {
+      "target": "menckleys-projects",
+      "sha": "592944235d0738437debf27661ad5a019c42a6b0",
+      "merged": "2026-11-18T09:22:33+00:00",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/3",
+      "title": "Bump actions/setup-python from 5 to 7",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "a2d31dcd367f60626e433203d3f24e36a1f011e8",
+      "merged": "2026-11-18T09:22:36+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/3",
+      "title": "Bump actions/checkout from 4 to 7",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -259,6 +279,22 @@
       "issue": "https://github.com/menckley/audit-repos/issues/27",
       "security": false,
       "detail": "## Contexte\n\nAucun commit n'a été fait. La tâche demande d'épingler `actions/checkout` et `actions/setup-python` par SHA de commit. Dans cet environnement, je n'ai pas pu interroger GitHub (`gh api` et `git ls-remote` ont été refusés faute d'approbation). Écrire des SHA de mémoire est trop risqué: u\n[… tronqué, 1214 caractères de plus]"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T09:22:33+00:00",
+      "reported": false,
+      "title": "Bump actions/setup-python from 5 to 7",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/3",
+      "repo": "menckleys-projects"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T09:22:36+00:00",
+      "reported": false,
+      "title": "Bump actions/checkout from 4 to 7",
+      "pr": "https://github.com/menckley/newsletter/pull/3",
+      "repo": "newsletter"
     }
   ],
   "last_bilan": null,
