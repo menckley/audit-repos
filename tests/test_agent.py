@@ -244,50 +244,27 @@ def main():
     assert sum(e["type"] == "dependabot_major" for e in st["log"]) == 1, "majeure signalée une fois"
     print("OK 8 Dependabot")
 
-    # --- 9. surveillance : seul le commit coupable est annulé
-    def run(wf, conclusion, sha, minutes, name="CI", event="push"):
-        return {"id": hash((wf, sha, minutes)) % 10**6, "workflow_id": wf, "event": event,
-                "status": "completed", "conclusion": conclusion, "head_sha": sha,
-                "created_at": ago(minutes=minutes), "name": name, "html_url": f"https://run/{sha}"}
-
-    commands = []
-    im.fresh_clone = lambda repo, dest: dest
-    im.git_identity = lambda d: None
-    im.push = lambda *a, **k: None
-    im.sh = lambda *a, **k: commands.append(a) or ""
-    agent_merge = st["watch"][0]          # merge de l'agent (sha m<n>)
+    # --- 9. une annulation faite par le Réparateur rouvre la tâche de l'agent
+    agent_merge = st["watch"][0]
     sha = agent_merge["sha"]
-    st["watch"] = [agent_merge, {"target": "pricer", "sha": "dep1", "merged": ago(minutes=40), "pr": "d",
-                                 "title": "Bump x", "issue_repo": None, "issue": None, "security": False}]
+    commits = {"pricer": [{"sha": "x", "commit": {"message": "docs: autre chose"}}]}
+    gh.get_commits = commits
+    real_get = gh.get
 
-    # 9a. scénario du 18/11 : un merge extérieur (« user1 ») casse la CI → rien n'est annulé
-    gh.runs["pricer"] = [run(1, "success", "dep1", 40), run(1, "success", sha, 30),
-                         run(1, "failure", "user1", 20), run(1, "cancelled", "r1", 15),
-                         run(1, "failure", "r2", 10)]
-    im.watch(gh, st)
-    assert not any(a[:2] == ("git", "revert") for a in commands), "aucune annulation à tort"
-    assert st["log"][-1]["type"] == "broken_external" and "user1" in st["log"][-1]["detail"]
-    n = len(st["log"]); im.watch(gh, st)
-    assert len(st["log"]) == n, "alerte une seule fois"
-    print("OK 9a merge extérieur coupable : alerte, aucune annulation")
+    def get(path, **params):
+        if path.endswith("/commits"):
+            return commits[path.split("/")[3]]
+        return real_get(path, **params)
 
-    # 9b. le merge de l'agent est le premier commit en échec → lui seul est annulé
-    gh.runs["pricer"] = [run(2, "success", "dep1", 40), run(2, "failure", sha, 30),
-                         run(2, "failure", "later", 5)]
+    gh.get = get
     im.watch(gh, st)
-    reverted = [a for a in commands if a[:3] == ("git", "revert", "--no-edit")]
-    assert reverted == [("git", "revert", "--no-edit", sha)], reverted
-    assert st["log"][-1]["type"] == "reverted" and [w["sha"] for w in st["watch"]] == ["dep1"]
+    assert agent_merge in st["watch"], "rien d'annulé : la tâche reste close"
+    commits["pricer"].insert(0, {"sha": "r", "commit": {"message": f"revert: x {common.REPAIR_MARK} {sha}"}})
+    im.watch(gh, st)
+    assert agent_merge not in st["watch"] and st["log"][-1]["type"] == "reverted"
     assert b3["state"] == "open" and "annulé" in labels(b3) and "- [ ] ✅ **Lancer**" in b3["body"]
-    print("OK 9b merge de l'agent coupable : lui seul est annulé")
-
-    # 9c. échec puis succès (transitoire), ou workflow jamais réussi → rien
-    gh.runs["pricer"] = [run(3, "success", "a", 30), run(3, "failure", "dep1", 20), run(3, "success", "b", 5)]
-    n = len(commands); im.watch(gh, st)
-    gh.runs["pricer"] = [run(4, "failure", "dep1", 20), run(4, "failure", "c", 5)]
-    im.watch(gh, st)
-    assert len(commands) == n, "rien à annuler"
-    print("OK 9c échec transitoire ou workflow jamais vert : rien n'est annulé")
+    gh.get = real_get
+    print("OK 9 annulation du Réparateur reportée sur la tâche")
 
     # --- 10. confidentialité et bilan
     im.log(st, "human", title="[pricer] faille X", issue="https://github.com/menckley/audit-securite/issues/1",
@@ -300,7 +277,7 @@ def main():
     assert "🛠️ Bilan" in gh.created[-1] and all(e["reported"] for e in st["log"])
     assert "Terminé :" in body and "T'attend :" in body and "Ce qui t'attend" in body
     assert "À faire par toi" in body and "Correctif de sécurité" in body and "faille X" not in body
-    assert "Annulé automatiquement" in body and "pas de moi" in body
+    assert "Annulé automatiquement" in body
     im.maybe_bilan(gh, gh, st, busy=False)
     assert sum("Bilan" in t for t in gh.created) == 1, "pas de doublon"
     print("OK 10 confidentialité et bilan")
@@ -326,6 +303,106 @@ def main():
     print("OK 12 mergeable redemandé")
 
 
+def test_alert_install():
+    ci = ("CI", "name: CI\n\non:\n  push:\n    branches: [main]\n  pull_request:\n\njobs: {}\n", "s1")
+    daily = (".github/workflows/daily.yml", "name: HPFC quotidienne\non:\n  schedule:\n    - cron: '0 6 * * *'\n"
+             "  workflow_dispatch:\n", "s2")
+    files = [(".github/workflows/ci.yml", ci[1], "s1"), daily]
+    changes = im.alert_changes(files)
+    assert set(changes) == {".github/workflows/ci.yml", im.ALERT_PATH}
+    assert changes[".github/workflows/ci.yml"].startswith("name: CI\n\non:\n  workflow_dispatch:\n  push:")
+    assert '"CI", "HPFC quotidienne"' in changes[im.ALERT_PATH]
+    assert "reparateur.yml@main" in changes[im.ALERT_PATH]
+    files = [(".github/workflows/ci.yml", changes[".github/workflows/ci.yml"], "s1"), daily,
+             (im.ALERT_PATH, changes[im.ALERT_PATH], "s3")]
+    assert im.alert_changes(files) == {}, "déjà à jour : aucune PR"
+    print("OK 13 installation de l'alerte (et relance manuelle ajoutée)")
+
+
+def test_repairer():
+    import repair
+
+    class G:
+        def __init__(self):
+            self.calls, self.issues_list, self.created = [], [], []
+            self.commits, self.pulls, self.runs = [], {}, []
+
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def get(self, path, **p):
+            if path.endswith("/commits"):
+                return self.commits
+            if "/pulls" in path:
+                return self.pulls.get(path.split("/")[-2], [])
+            if "/runs" in path:
+                return {"workflow_runs": self.runs}
+            return None
+
+        def write(self, method, path, data=None):
+            self.calls.append((method, path))
+            return {}
+
+        def issues(self, repo, state="open", labels=None):
+            return [i for i in self.issues_list if i["state"] == "open"]
+
+        def create_issue(self, repo, title, body, labels):
+            issue = {"number": len(self.issues_list) + 1, "body": body, "state": "open", "title": title}
+            self.issues_list.append(issue)
+            self.created.append(title)
+            return issue
+
+        def close_issue(self, repo, n, reason="completed"):
+            self.issues_list[n - 1]["state"] = "closed"
+
+    git = []
+    BAD = "b" * 40
+    repair.sh = lambda *a, **k: git.append(a) or (f"{BAD} p1 p2" if "rev-list" in a else "newsha\n")
+
+    def run(conclusion, sha, minutes, attempt=1, message="feat: x"):
+        return {"id": minutes, "workflow_id": 7, "name": "HPFC quotidienne", "event": "schedule",
+                "status": "completed", "conclusion": conclusion, "head_sha": sha, "head_branch": "main",
+                "run_attempt": attempt, "created_at": ago(minutes=minutes), "html_url": f"https://run/{sha}",
+                "head_commit": {"message": message}}
+
+    g = G()
+    rp = repair.Repairer(g, "power-hpfc", Path("."))
+    # 1er échec : simple relance
+    assert rp.handle(run("failure", BAD, 5)) == "relancé une fois"
+    assert ("POST", "/repos/menckley/power-hpfc/actions/runs/5/rerun-failed-jobs") in g.calls
+    # 2e échec : le merge de la PR #9 est coupable → annulé, relancé, issue ouverte
+    g.runs = [run("success", "good", 60), run("failure", BAD, 30), run("failure", BAD, 5, 2)]
+    g.pulls[BAD] = [{"number": 9, "title": "Bump python-dateutil", "merged_at": "x", "merge_commit_sha": BAD}]
+    assert rp.handle(run("failure", BAD, 5, attempt=2)) == "annulé et relancé"
+    assert any(a[:2] == ("git", "revert") and BAD in a for a in git) and ("git", "revert", "--no-edit", "-m", "1", BAD) in git
+    assert ("POST", "/repos/menckley/power-hpfc/actions/workflows/7/dispatches") in g.calls
+    assert len(g.created) == 1 and "#9" in g.issues_list[0]["body"] and "@menckley" in g.issues_list[0]["body"]
+    # le workflow relancé repasse au vert → « réparé », issue fermée
+    msg = f"revert: Bump python-dateutil (#9) {repair.MARK} {BAD}"
+    assert rp.handle(run("success", "rev", 1, message=msg)) == "réparé"
+    assert g.issues_list[0]["state"] == "closed"
+    assert rp.handle(run("success", "rev", 0, message=msg)) == "réparé" and len(g.created) == 1, "pas de doublon"
+    # coupable déjà traité : on n'annule pas deux fois
+    g.commits = [{"sha": "rev", "commit": {"message": msg}}]
+    assert rp.handle(run("failure", BAD, 5, attempt=2)) == "coupable déjà traité"
+    # commit poussé directement (sans PR) : alerte seulement
+    g2 = G(); rp2 = repair.Repairer(g2, "power-hpfc", Path("."))
+    g2.runs = [run("success", "good", 60), run("failure", "direct", 30)]
+    assert rp2.handle(run("failure", "direct", 5, attempt=2)) == "alerte : commit direct"
+    # échec malgré l'annulation : le changement est rétabli, alerte
+    g3 = G(); rp3 = repair.Repairer(g3, "power-hpfc", Path("."))
+    g3.issues_list.append({"number": 1, "state": "open", "body": f"<!-- incident: {BAD} -->", "title": "t"})
+    g3.commits = [{"sha": "rev", "commit": {"message": msg}}]
+    git.clear()
+    assert rp3.handle(run("failure", "rev", 1, message=msg)) == "rétabli"
+    assert any(a[:2] == ("git", "revert") and "rev" in a for a in git)
+    # échec transitoire puis succès, branche autre que main : rien
+    assert rp.handle(dict(run("failure", "x", 1), head_branch="feature")).startswith("ignoré")
+    print("OK 14 Réparateur : relance, annulation du coupable, réparé, rétabli, commit direct")
+
+
 if __name__ == "__main__":
     main()
+    test_alert_install()
+    test_repairer()
     print("\nTous les tests passent.")

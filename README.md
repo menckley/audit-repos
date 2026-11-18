@@ -10,6 +10,8 @@ Agent d'audit et de maintenance de mes repos GitHub publics, propulsé par Claud
 
 Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développeur les traite.
 
+- **🚑 Le Réparateur** (workflow réutilisable `reparateur.yml`) : appelé par le fichier `.github/workflows/alerte.yml` que le Développeur installe et tient à jour dans chaque repo. Dès qu'un workflow échoue sur la branche principale, il le relance. Si l'échec persiste, il annule le merge de PR qui l'a provoqué, relance le workflow et me prévient par une issue (donc un e-mail). Si l'annulation ne suffit pas, il rétablit le changement et m'alerte. Il n'annule jamais un commit poussé directement, ni deux fois le même.
+
 ## Fonctionnement
 
 ```
@@ -63,8 +65,9 @@ sans code.
   ouverte et l'agent me le signale.
 - **Une seule tentative de correction** d'une CI rouge, sans jamais supprimer ni affaiblir
   un test.
-- **Annulation automatique** si un workflow de la branche principale (collecte,
-  newsletter, CI…) échoue dans les 48 h après un merge de l'agent alors qu'il passait avant.
+- **Réparation automatique** : si un workflow de la branche principale (collecte, newsletter,
+  CI…) échoue deux fois de suite, seul le merge qui l'a fait passer au rouge est annulé, puis
+  le workflow est relancé (voir 🚑 Le Réparateur).
 - **Changements majeurs** hors sécurité (version majeure d'une bibliothèque ou de Python, workflow de
   collecte, format de données) et efforts L/XL : toujours soumis à ma décision.
 - **Failles de sécurité** : détails uniquement dans le repo privé `audit-securite`.

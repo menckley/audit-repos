@@ -1,0 +1,37 @@
+name: 🚑 Réparateur
+
+# Workflow réutilisable, appelé par le fichier d'alerte (.github/workflows/alerte.yml) que le
+# Développeur installe dans chaque repo. Il tourne dans le repo concerné, avec son GITHUB_TOKEN.
+on:
+  workflow_call:
+
+jobs:
+  reparer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Récupérer le Réparateur
+        uses: actions/checkout@v4
+        with:
+          repository: menckley/audit-repos
+          path: .reparateur
+          persist-credentials: false
+
+      - name: Récupérer le repo à réparer
+        uses: actions/checkout@v4
+        with:
+          path: repo
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Diagnostiquer et réparer
+        working-directory: .reparateur/agent
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO_DIR: ${{ github.workspace }}/repo
+        run: python repair.py

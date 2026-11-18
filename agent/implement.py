@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from common import (AGENT_MARK, CONFIG, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
+                    REPAIR_BACK, REPAIR_MARK,
                     ROOT, SECURITY_REPO, V2, GitHub, GitHubError, QuotaExhausted, commit_state,
                     compose_body, decision_block, footer, fresh_clone, is_auto, render,
                     run_claude, scrub, set_decision, sh, tmp_dir, truncate)
@@ -606,103 +607,155 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
 # --------------------------------------------------------------------------- surveillance
 
 
-BROKEN = {"failure", "timed_out", "startup_failure"}  # « cancelled » n'est pas un échec
-
-
-def first_failure(runs: list[dict]) -> dict | None:
-    """Pour un workflow : si son dernier run est en échec alors qu'il a déjà réussi, renvoie
-    le premier run en échec après le dernier succès. Son commit est le vrai coupable."""
-    done = sorted((r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"),
-                  key=lambda r: r["created_at"])
-    if not done or done[-1]["conclusion"] not in BROKEN:
-        return None
-    first = None
-    for run in reversed(done):
-        if run["conclusion"] == "success":
-            return first
-        if run["conclusion"] in BROKEN:
-            first = run
-    return None  # jamais réussi : rien à attribuer
-
-
 def watch(gh: GitHub, state: dict) -> None:
-    """Annule un merge de l'agent seulement s'il est le commit qui a fait passer un workflow
-    de la branche principale au rouge. Sinon, alerte sans rien annuler."""
+    """C'est le Réparateur qui annule un merge fautif. Ici, on reporte ses annulations sur
+    les tâches de l'agent : issue rouverte avec les cases à cocher, et mention dans le bilan."""
     for entry in list(state["watch"]):
         expired = now() - parse(entry["merged"]) > timedelta(hours=CONFIG["watch_hours"])
         if expired or not entry.get("sha"):
             state["watch"].remove(entry)
-    for target in sorted({e["target"] for e in state["watch"]}):
-        entries = [e for e in state["watch"] if e["target"] == target]
-        base = gh.repo(target)["default_branch"]
-        runs = [r for r in gh.workflow_runs(target, branch=base) if r["event"] != "pull_request"]
-        by_workflow: dict[int, list[dict]] = {}
-        for run in runs:
-            by_workflow.setdefault(run["workflow_id"], []).append(run)
-        for wf_id, wf_runs in by_workflow.items():
-            bad = first_failure(wf_runs)
-            if not bad:
-                continue
-            guilty = next((e for e in entries if e["sha"] == bad["head_sha"]), None)
-            if guilty:
-                revert(gh, state, guilty, bad)
-                break  # une annulation par repo et par passage, puis on revérifie
-            if once(state, f"broken:{target}:{bad['id']}"):
-                log(state, "broken_external", repo=target, workflow_id=wf_id, pr=None,
-                    title=f"`{target}` : le workflow « {bad['name']} » échoue",
-                    detail=f"en échec depuis le commit {bad['head_sha'][:7]}, qui n'est pas un "
-                           f"merge de l'agent : rien n'a été annulé ({bad['html_url']})")
-                print(f"  🚨 {target} : « {bad['name']} » cassé par {bad['head_sha'][:7]} (pas l'agent)")
+            continue
+        commits = gh.get(f"/repos/{OWNER}/{entry['target']}/commits", since=entry["merged"],
+                         per_page=100) or []
+        messages = [c["commit"]["message"] for c in commits]
+        mark = f"{REPAIR_MARK} {entry['sha']}"
+        if not any(mark in m for m in messages) or any(REPAIR_BACK in m and mark in m for m in messages):
+            continue
+        state["watch"].remove(entry)
+        log(state, "reverted", title=entry["title"], pr=entry["pr"], repo=entry["target"],
+            security=entry["security"], detail="annulé par le Réparateur : un workflow échouait "
+            "depuis ce merge")
+        if entry.get("issue"):
+            repo, number = entry["issue_repo"], entry["issue"]
+            gh.update_issue(repo, number, state="open")
+            gh.comment(repo, number, "↩️ Le Réparateur a annulé ce changement : un workflow du repo "
+                       "échouait depuis son merge. Commente si tu as une piste, puis coche **Lancer** "
+                       "pour que je recommence.")
+            relabel(gh, repo, number, ["mergé"], ["annulé"])
+            issue = {"number": number, "body": gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")["body"]}
+            reopen_decision(gh, repo, issue)
+        print(f"  ↩️ annulé par le Réparateur : {entry['pr']}")
 
 
-def revert(gh: GitHub, state: dict, entry: dict, run: dict) -> None:
-    state["watch"].remove(entry)
-    target, sha = entry["target"], entry["sha"]
-    reason = f"le workflow « {run['name']} » échoue depuis ce merge ({run['html_url']})"
-    print(f"  ↩️ annulation de {entry['pr']} : {reason}")
+# --------------------------------------------------------------------------- alerte Réparateur
+
+ALERT_PATH = ".github/workflows/alerte.yml"
+ALERT_BRANCH = "agent/alerte-reparateur"
+NAME_RE = re.compile(r"^name:\s*(.+?)\s*$", re.M)
+
+
+def alert_yaml(names: list[str]) -> str:
+    listed = ", ".join(json.dumps(n, ensure_ascii=False) for n in names)
+    return f"""# Fichier géré automatiquement par le Développeur (menckley/audit-repos) : ne pas modifier.
+# Dès qu'un workflow se termine en échec sur la branche principale, le Réparateur est appelé :
+# il relance, cherche le merge fautif, l'annule si besoin, relance et te prévient.
+name: 🚨 Alerte Réparateur
+
+on:
+  workflow_run:
+    workflows: [{listed}]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: reparateur
+  cancel-in-progress: false
+
+jobs:
+  reparer:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' ||
+      github.event.workflow_run.conclusion == 'timed_out' ||
+      contains(github.event.workflow_run.head_commit.message, '{REPAIR_MARK}')
+    uses: menckley/audit-repos/.github/workflows/reparateur.yml@main
+"""
+
+
+def workflow_files(gh: GitHub, repo: str) -> list[tuple[str, str, str]]:
     try:
-        work = tmp_dir("revert")
-        repo_dir = fresh_clone(target, work / target)
-        git_identity(repo_dir)
-        branch = f"agent/revert-{sha[:8]}"
-        sh("git", "checkout", "-q", "-B", branch, cwd=repo_dir)
-        sh("git", "revert", "--no-edit", sha, cwd=repo_dir)
-        push(repo_dir, target, branch, force=True)
-        base = gh.repo(target)["default_branch"]
-        pr = gh.open_pr_for(target, branch) or gh.create_pr(
-            target, branch, base, f"revert: {entry['title']}"[:250],
-            f"Annulation automatique de {entry['pr']} : {reason}.\n\n"
-            "🛠️ Le Développeur (Claude Code).")
-        for attempt in range(6):  # GitHub met quelques secondes à rendre la PR mergeable
-            try:
-                gh.merge_pr(target, pr["number"], f"revert: {entry['title']}"[:200])
-                break
-            except GitHubError:
-                if attempt == 5:
-                    raise
-                time.sleep(10)
-        gh.delete_branch(target, branch)
-    except Exception as exc:  # noqa: BLE001
-        log(state, "revert_failed", title=entry["title"], pr=entry["pr"], repo=target,
-            security=entry["security"], detail=f"{reason} ; annulation impossible : "
-            f"{truncate(scrub(str(exc)), 200)}")
-        return
-    log(state, "reverted", title=entry["title"], pr=entry["pr"], repo=target,
-        security=entry["security"], detail=reason)
-    if entry.get("issue"):
-        repo, number = entry["issue_repo"], entry["issue"]
-        gh.update_issue(repo, number, state="open")
-        gh.comment(repo, number, f"↩️ Changement annulé automatiquement : {reason}.\n\n"
-                   "Commente si tu as une piste, puis coche **Lancer** pour que je recommence.")
-        relabel(gh, repo, number, ["mergé"], ["annulé"])
-        issue = {"number": number, "body": gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")["body"]}
-        reopen_decision(gh, repo, issue)
+        listing = gh.get(f"/repos/{OWNER}/{repo}/contents/.github/workflows") or []
+    except GitHubError:
+        return []
+    files = []
+    for f in listing:
+        if f["name"].endswith((".yml", ".yaml")):
+            content = gh.get(f"/repos/{OWNER}/{repo}/contents/{f['path']}")
+            text = base64.b64decode(content.get("content", "")).decode("utf-8", "replace")
+            files.append((f["path"], text, content["sha"]))
+    return files
+
+
+def alert_changes(files: list[tuple[str, str, str]]) -> dict[str, str]:
+    """Fichiers à créer ou modifier : l'alerte (à jour de tous les workflows) et le
+    déclencheur manuel des workflows qui n'en ont pas (pour pouvoir les relancer)."""
+    names, changes = [], {}
+    for path, text, _ in files:
+        if path == ALERT_PATH:
+            continue
+        found = NAME_RE.search(text)
+        names.append(found[1].strip("\"'") if found else path)
+        if "workflow_dispatch" not in text and re.search(r"^on:[ \t]*\n", text, re.M):
+            changes[path] = re.sub(r"^on:[ \t]*\n", "on:\n  workflow_dispatch:\n", text, count=1, flags=re.M)
+    if not names:
+        return {}
+    alert = alert_yaml(sorted(set(names)))
+    current = next((text for path, text, _ in files if path == ALERT_PATH), None)
+    if current != alert:
+        changes[ALERT_PATH] = alert
+    return changes
+
+
+def ensure_alerts(gh: GitHub, state: dict, repos: list[str]) -> None:
+    for repo in repos:
+        pr = gh.open_pr_for(repo, ALERT_BRANCH)
+        if pr:
+            status, _ = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
+            full = pull_with_mergeable(gh, repo, pr["number"])
+            if status == "success" and full.get("mergeable"):
+                gh.merge_pr(repo, pr["number"], pr["title"])
+                gh.delete_branch(repo, ALERT_BRANCH)
+                log(state, "merged", title=f"[{repo}] Alerte du Réparateur installée", pr=pr["html_url"],
+                    repo=repo, security=False)
+                print(f"  ✓ alerte installée : {repo}")
+            elif status in ("failure", "none") and once(state, f"alert-ko:{repo}:{pr['head']['sha']}"):
+                log(state, "review", title=f"[{repo}] Alerte du Réparateur", pr=pr["html_url"],
+                    repo=repo, security=False, detail="la CI de la PR d'installation n'est pas verte.")
+            continue
+        changes = alert_changes(workflow_files(gh, repo))
+        if not changes:
+            continue
+        base = gh.repo(repo)["default_branch"]
+        base_sha = gh.get(f"/repos/{OWNER}/{repo}/git/ref/heads/{base}")["object"]["sha"]
+        gh.delete_branch(repo, ALERT_BRANCH)
+        gh.write("POST", f"/repos/{OWNER}/{repo}/git/refs",
+                 {"ref": f"refs/heads/{ALERT_BRANCH}", "sha": base_sha})
+        shas = {path: sha for path, _, sha in workflow_files(gh, repo)}
+        for path, text in changes.items():
+            data = {"message": f"ci: {'alerte du Réparateur' if path == ALERT_PATH else 'relance manuelle possible'}"
+                               f" ({path.rsplit('/', 1)[-1]})",
+                    "content": base64.b64encode(text.encode()).decode(), "branch": ALERT_BRANCH}
+            if path in shas:
+                data["sha"] = shas[path]
+            gh.write("PUT", f"/repos/{OWNER}/{repo}/contents/{path}", data)
+        gh.create_pr(repo, ALERT_BRANCH, base, "ci: alerte du Réparateur (relance et annulation automatiques)",
+                     "Installe ou met à jour `.github/workflows/alerte.yml` : dès qu'un workflow échoue sur "
+                     "la branche principale, le 🚑 Réparateur (menckley/audit-repos) le relance, annule le "
+                     "merge fautif si besoin, relance et prévient par une issue.\n\n"
+                     "Ajoute aussi `workflow_dispatch` aux workflows qui n'en avaient pas, pour qu'ils "
+                     "puissent être relancés après une annulation.\n\n"
+                     "🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement si la CI est verte.")
+        print(f"  + PR d'alerte ouverte : {repo}")
 
 
 # --------------------------------------------------------------------------- bilan
 
 
-ATTENTION_TYPES = ("human", "broken_external", "revert_failed", "reverted", "review", "clarify", "failed",
+ATTENTION_TYPES = ("human", "revert_failed", "reverted", "review", "clarify", "failed",
                    "dependabot_major", "dependabot_red")
 PR_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/pull/(\d+)")
 ISSUE_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/issues/(\d+)")
@@ -714,11 +767,6 @@ def still_waiting(gh: GitHub, e: dict) -> bool:
     if e["type"] in ("human", "revert_failed"):
         return True
     try:
-        if e["type"] == "broken_external":
-            runs = gh.get(f"/repos/{OWNER}/{e['repo']}/actions/workflows/{e['workflow_id']}/runs",
-                          per_page=10)["workflow_runs"]
-            done = [r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"]
-            return not done or done[0]["conclusion"] != "success"
         pr_ref = PR_URL_RE.search(e.get("pr") or "")
         if pr_ref:
             pr = gh.pull(pr_ref[1], int(pr_ref[2]))
@@ -767,8 +815,6 @@ def bilan_body(done: list[dict], waiting: list[dict]) -> str:
     todo = [
         ("👤 À faire par toi (hors code)", of(waiting, "human"),
          lambda e: line(e, f"\n  > {e['detail']}")),
-        ("🚨 Workflow cassé par un changement qui n'est pas de moi : à regarder vite",
-         of(waiting, "broken_external"), lambda e: line(e, detail(e))),
         ("🚨 Annulation impossible : à vérifier vite", of(waiting, "revert_failed"),
          lambda e: line(e, detail(e))),
         ("↩️ Annulé automatiquement : commente puis coche **Lancer** pour réessayer",
@@ -880,7 +926,9 @@ def main() -> None:
         if CONFIG["dependabot_automerge"]:
             print("\n— Dependabot")
             dependabot(gh, state, public)
-        print("\n— Surveillance après merge")
+        print("\n— Alerte du Réparateur dans chaque repo")
+        ensure_alerts(gh, state, public)
+        print("\n— Annulations faites par le Réparateur")
         watch(gh, state)
 
         busy = bool(state["pending"]) or started < len(queue)
