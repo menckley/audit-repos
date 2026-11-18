@@ -41,6 +41,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "pricer",
+      "number": 10,
+      "url": "https://github.com/menckley/pricer/pull/10",
+      "branch": "agent/journal-concurrence-et-commit-message",
+      "title": "[pricer] Archivage GitHub : 2 tentatives seulement, libellé libre dans le message de commit, SHA1 en test",
+      "issue_repo": "audit-securite",
+      "issue": 2,
+      "security": true,
+      "opened": "2026-11-18T07:56:02+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [],
