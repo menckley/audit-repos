@@ -182,7 +182,7 @@ def issue_body(repo: str, f: dict) -> str:
         parts += ["### Sources", "\n".join(f"- {x}" for x in f["sources"])]
     if f["action_humaine"]:
         parts += ["### 👤 Action de ta part", f["action_humaine"]]
-    if f["majeur"] and f["categorie"] in CONFIG["auto_categories"]:
+    if f["majeur"] and f["categorie"] in CONFIG["auto_categories"] and not f["auto"]:
         parts += ["_Changement majeur : soumis à ta décision malgré sa catégorie._"]
     return compose_body("\n\n".join(parts), repo, f["id"],
                         footer(f["auto"], f["type"], f["codable"]))

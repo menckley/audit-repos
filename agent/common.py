@@ -59,6 +59,8 @@ REFUSE_RE = re.compile(r"- \[[xX]\] ❌ \*\*Refuser\*\*")
 
 
 def is_auto(categorie: str, effort: str, majeur: bool) -> bool:
+    if categorie in CONFIG.get("always_auto_categories", []):
+        return True  # sécurité : toujours corrigée automatiquement, quelle que soit la taille
     return (categorie in CONFIG["auto_categories"] and effort in CONFIG["auto_efforts"]
             and not majeur)
 

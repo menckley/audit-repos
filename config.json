@@ -2,7 +2,9 @@
   "owner": "menckley",
   "public_repo": "audit-repos",
   "security_repo": "audit-securite",
-  "exclude": ["audit-repos"],
+  "exclude": [
+    "audit-repos"
+  ],
   "model": "sonnet",
   "max_findings_per_repo": 12,
   "max_tasks_per_run": 5,
@@ -10,10 +12,20 @@
   "implement_max_turns": 100,
   "claude_timeout_minutes": 45,
   "recap_deadline_day": 4,
-  "auto_categories": ["maintenance", "securite"],
-  "auto_efforts": ["XS", "S", "M"],
+  "auto_categories": [
+    "maintenance",
+    "securite"
+  ],
+  "auto_efforts": [
+    "XS",
+    "S",
+    "M"
+  ],
   "ci_wait_minutes": 45,
   "watch_hours": 48,
   "bilan_min_interval_hours": 12,
-  "dependabot_automerge": true
+  "dependabot_automerge": true,
+  "always_auto_categories": [
+    "securite"
+  ]
 }

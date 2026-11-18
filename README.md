@@ -19,7 +19,7 @@ Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développ
                        │
         ┌──────────────┴───────────────┐
         ▼                              ▼
- Maintenance + sécurité         Amélioration + opérationnel
+ Sécurité (tout) + maintenance  Amélioration + opérationnel
  (sauf changements majeurs)     (et changements majeurs)
         │                              │
    🤖 automatique              ☑️ je coche « Lancer » (+ commentaire facultatif)
@@ -65,7 +65,7 @@ sans code.
   un test.
 - **Annulation automatique** si un workflow de la branche principale (collecte,
   newsletter, CI…) échoue dans les 48 h après un merge de l'agent alors qu'il passait avant.
-- **Changements majeurs** (version majeure d'une bibliothèque ou de Python, workflow de
+- **Changements majeurs** hors sécurité (version majeure d'une bibliothèque ou de Python, workflow de
   collecte, format de données) et efforts L/XL : toujours soumis à ma décision.
 - **Failles de sécurité** : détails uniquement dans le repo privé `audit-securite`.
 - **Dependabot** : mises à jour non majeures mergées si la CI est verte, une par repo et

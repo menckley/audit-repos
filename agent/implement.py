@@ -736,7 +736,8 @@ def main() -> None:
                     print(f"  refusée : {repo}#{issue['number']}")
                 elif LAUNCH_RE.search(body) or "approuvé" in labels:
                     queue.append((repo, issue, True))
-                elif "auto" in labels and not labels & STOPPED:
+                elif ("auto" in labels or cat_of(labels) in CONFIG.get("always_auto_categories", [])) \
+                        and "non-codable" not in labels and not labels & STOPPED:
                     queue.append((repo, issue, False))
         # CI d'abord, puis sécurité, puis les décisions du propriétaire, puis le reste.
         queue.sort(key=lambda t: (t[0] != SECURITY_REPO, not t[2], t[1]["number"]))
