@@ -100,14 +100,14 @@
     },
     {
       "target": "pricer",
-      "number": 12,
-      "url": "https://github.com/menckley/pricer/pull/12",
-      "branch": "agent/pricings-de-test-dans-historique-git",
-      "title": "[pricer] CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
-      "issue_repo": "audit-repos",
-      "issue": 39,
-      "security": false,
-      "opened": "2026-11-18T09:22:26+00:00",
+      "number": 13,
+      "url": "https://github.com/menckley/pricer/pull/13",
+      "branch": "agent/actions-non-epinglees-sha",
+      "title": "Correctif de sécurité",
+      "issue_repo": "audit-securite",
+      "issue": 6,
+      "security": true,
+      "opened": "2026-11-18T09:32:45+00:00",
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
@@ -192,6 +192,16 @@
       "title": "Bump actions/checkout from 4 to 7",
       "issue_repo": null,
       "issue": null,
+      "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "dcf3a6b56c49beabd2a5b662a5981611f707df5b",
+      "merged": "2026-11-18T09:32:03+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/12",
+      "title": "[pricer] CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
+      "issue_repo": "audit-repos",
+      "issue": 39,
       "security": false
     }
   ],
@@ -295,6 +305,16 @@
       "title": "Bump actions/checkout from 4 to 7",
       "pr": "https://github.com/menckley/newsletter/pull/3",
       "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T09:32:03+00:00",
+      "reported": false,
+      "title": "[pricer] CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
+      "pr": "https://github.com/menckley/pricer/pull/12",
+      "issue": "https://github.com/menckley/audit-repos/issues/39",
+      "security": false,
+      "repo": "pricer"
     }
   ],
   "last_bilan": null,
