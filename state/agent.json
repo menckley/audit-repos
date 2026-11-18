@@ -111,6 +111,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "power-hpfc",
+      "number": 1,
+      "url": "https://github.com/menckley/power-hpfc/pull/1",
+      "branch": "agent/ci-pr-tests-ruff",
+      "title": "[power-hpfc] Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
+      "issue_repo": "audit-repos",
+      "issue": 27,
+      "security": false,
+      "opened": "2026-11-18T09:34:15+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
