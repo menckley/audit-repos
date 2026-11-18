@@ -13,6 +13,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "pricer",
+      "number": 15,
+      "url": "https://github.com/menckley/pricer/pull/15",
+      "branch": "agent/drapeau-pricing-test-et-qualite-journal",
+      "title": "[pricer] Distinguer pricings de test et pricings réels, avec statut du deal (gagné/perdu)",
+      "issue_repo": "audit-repos",
+      "issue": 4,
+      "security": false,
+      "opened": "2026-11-18T16:32:08+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
