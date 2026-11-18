@@ -401,8 +401,57 @@ def test_repairer():
     print("OK 14 Réparateur : relance, annulation du coupable, réparé, rétabli, commit direct")
 
 
+def test_hygiene():
+    import subprocess
+    import implement as imp
+    from common import sh as real_sh
+    imp.sh = real_sh  # vrai git dans un dossier temporaire
+    d = Path(tempfile.mkdtemp())
+    for cmd in (["git", "init", "-q", "-b", "main"], ["git", "config", "user.email", "t@t"],
+                ["git", "config", "user.name", "t"]):
+        subprocess.run(cmd, cwd=d, check=True)
+    (d / "tests" / "__pycache__").mkdir(parents=True)
+    (d / "tests" / "__pycache__" / "t.cpython-312.pyc").write_bytes(b"x")
+    (d / "app.py").write_text("x = 1\n")
+    (d / ".gitignore").write_text("data/\n")
+    subprocess.run(["git", "add", "-A"], cwd=d, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=d, check=True)
+    assert imp.clean_generated(d) is True
+    tracked = real_sh("git", "ls-files", cwd=d).split()
+    assert "app.py" in tracked and not any(".pyc" in f for f in tracked)
+    gitignore = (d / ".gitignore").read_text()
+    assert gitignore.startswith("data/\n") and "__pycache__/" in gitignore
+    assert (d / "tests" / "__pycache__" / "t.cpython-312.pyc").exists(), "fichier conservé sur le disque"
+    assert imp.clean_generated(d) is False, "rien de plus à nettoyer"
+    print("OK 15 fichiers générés retirés du suivi, .gitignore complété")
+
+    class G:
+        deleted = []
+
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def get(self, path, **p):
+            if path.endswith("/branches"):
+                return [{"name": n} for n in ("main", "agent/vieille", "dependabot/pip/x", "dependabot/pip/ouverte",
+                                              "ma-branche", "agent/sans-pr")]
+            head = p["head"].split(":", 1)[1]
+            return {"agent/vieille": [{"state": "closed"}], "dependabot/pip/x": [{"state": "closed"}],
+                    "dependabot/pip/ouverte": [{"state": "open"}], "ma-branche": [{"state": "closed"}],
+                    "agent/sans-pr": []}[head]
+
+        def delete_branch(self, repo, name):
+            self.deleted.append(name)
+
+    g = G()
+    imp.sweep_branches(g, ["settlements-eex"])
+    assert sorted(g.deleted) == ["agent/vieille", "dependabot/pip/x"], g.deleted
+    print("OK 16 branches mergées supprimées ; branches ouvertes et les tiennes intactes")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
     test_repairer()
+    test_hygiene()
     print("\nTous les tests passent.")

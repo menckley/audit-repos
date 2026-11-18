@@ -225,6 +225,35 @@ def push(repo_dir: Path, target: str, branch: str, force: bool) -> None:
        f"HEAD:refs/heads/{branch}", cwd=repo_dir)
 
 
+# --------------------------------------------------------------------------- hygiène
+
+GENERATED_RE = re.compile(r"(^|/)(__pycache__|\.pytest_cache|\.ruff_cache|\.mypy_cache|\.tox|\.venv|venv|"
+                          r"[^/]+\.egg-info)(/|$)|\.py[co]$|(^|/)\.DS_Store$")
+GITIGNORE_LINES = ["__pycache__/", "*.py[co]", ".pytest_cache/", ".ruff_cache/", ".mypy_cache/",
+                   ".tox/", ".venv/", "venv/", "*.egg-info/", ".DS_Store"]
+
+
+def clean_generated(repo_dir: Path) -> bool:
+    """Retire du suivi git les fichiers générés (caches Python, environnements virtuels…) et
+    complète .gitignore. Vrai si un commit de nettoyage a été créé."""
+    junk = [p for p in sh("git", "ls-files", cwd=repo_dir).splitlines() if GENERATED_RE.search(p)]
+    if not junk:
+        return False
+    sh("git", "rm", "-r", "-q", "--cached", "--", *junk, cwd=repo_dir)
+    gitignore = repo_dir / ".gitignore"
+    existing = gitignore.read_text(encoding="utf-8").splitlines() if gitignore.exists() else []
+    missing = [line for line in GITIGNORE_LINES if line not in existing]
+    if missing:
+        prefix = "" if not existing or existing[-1] == "" else "\n"
+        with gitignore.open("a", encoding="utf-8") as f:
+            f.write(prefix + "# Fichiers générés\n" + "\n".join(missing) + "\n")
+        sh("git", "add", ".gitignore", cwd=repo_dir)
+    sh("git", "commit", "-q", "-m", "chore: retirer les fichiers générés et compléter .gitignore\n\n"
+       "Co-Authored-By: Claude <noreply@anthropic.com>", cwd=repo_dir)
+    print(f"  🧹 {len(junk)} fichier(s) généré(s) retiré(s) du suivi git")
+    return True
+
+
 def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
               issue_ref: str | None) -> dict:
     """Clone, laisse Claude travailler sur une branche, pousse et ouvre (ou réutilise) la PR."""
@@ -243,6 +272,7 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
     commits = int(sh("git", "rev-list", "--count", f"origin/{base}..HEAD", cwd=repo_dir).strip())
     if commits == 0:
         raise NoChange(body or title or "Claude n'a produit aucun commit, sans explication.")
+    clean_generated(repo_dir)
     push(repo_dir, target, branch, force=True)
 
     footer_lines = ["", "---"]
@@ -268,6 +298,7 @@ def fix_ci(gh: GitHub, entry: dict, failed: list[dict], pr_title: str) -> bool:
     run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
     if sh("git", "rev-parse", "HEAD", cwd=repo_dir).strip() == before:
         return False
+    clean_generated(repo_dir)
     push(repo_dir, target, branch, force=False)
     return True
 
@@ -599,6 +630,7 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
                                        "merged": iso(now()), "pr": pr["html_url"],
                                        "title": pr["title"], "issue_repo": None, "issue": None,
                                        "security": False})
+                gh.delete_branch(repo, pr["head"]["ref"])
                 log(state, "dependabot_merged", title=pr["title"], pr=pr["html_url"], repo=repo)
                 print(f"  ✓ Dependabot mergée : {pr['html_url']}")
                 merged_one = True
@@ -710,21 +742,28 @@ def alert_changes(files: list[tuple[str, str, str]]) -> dict[str, str]:
     return changes
 
 
+def advance_infra_pr(gh: GitHub, state: dict, repo: str, branch: str, label: str) -> bool:
+    """Fait avancer une PR technique de l'agent : merge si la CI est verte.
+    Vrai si une PR était ouverte sur cette branche."""
+    pr = gh.open_pr_for(repo, branch)
+    if not pr:
+        return False
+    status, _ = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
+    full = pull_with_mergeable(gh, repo, pr["number"])
+    if status == "success" and full.get("mergeable"):
+        gh.merge_pr(repo, pr["number"], pr["title"])
+        gh.delete_branch(repo, branch)
+        log(state, "merged", title=f"[{repo}] {label}", pr=pr["html_url"], repo=repo, security=False)
+        print(f"  ✓ {label} : {repo}")
+    elif status in ("failure", "none") and once(state, f"infra-ko:{repo}:{pr['head']['sha']}"):
+        log(state, "review", title=f"[{repo}] {label}", pr=pr["html_url"], repo=repo, security=False,
+            detail="la CI de cette PR technique n'est pas verte.")
+    return True
+
+
 def ensure_alerts(gh: GitHub, state: dict, repos: list[str]) -> None:
     for repo in repos:
-        pr = gh.open_pr_for(repo, ALERT_BRANCH)
-        if pr:
-            status, _ = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
-            full = pull_with_mergeable(gh, repo, pr["number"])
-            if status == "success" and full.get("mergeable"):
-                gh.merge_pr(repo, pr["number"], pr["title"])
-                gh.delete_branch(repo, ALERT_BRANCH)
-                log(state, "merged", title=f"[{repo}] Alerte du Réparateur installée", pr=pr["html_url"],
-                    repo=repo, security=False)
-                print(f"  ✓ alerte installée : {repo}")
-            elif status in ("failure", "none") and once(state, f"alert-ko:{repo}:{pr['head']['sha']}"):
-                log(state, "review", title=f"[{repo}] Alerte du Réparateur", pr=pr["html_url"],
-                    repo=repo, security=False, detail="la CI de la PR d'installation n'est pas verte.")
+        if advance_infra_pr(gh, state, repo, ALERT_BRANCH, "Alerte du Réparateur installée"):
             continue
         changes = alert_changes(workflow_files(gh, repo))
         if not changes:
@@ -750,6 +789,47 @@ def ensure_alerts(gh: GitHub, state: dict, repos: list[str]) -> None:
                      "puissent être relancés après une annulation.\n\n"
                      "🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement si la CI est verte.")
         print(f"  + PR d'alerte ouverte : {repo}")
+
+
+HYGIENE_BRANCH = "agent/hygiene"
+
+
+def ensure_hygiene(gh: GitHub, state: dict, repos: list[str]) -> None:
+    """Retire les fichiers générés déjà commités (PR technique, mergée si la CI est verte)."""
+    for repo in repos:
+        if advance_infra_pr(gh, state, repo, HYGIENE_BRANCH, "Fichiers générés retirés du suivi git"):
+            continue
+        base = gh.repo(repo)["default_branch"]
+        tree = gh.get(f"/repos/{OWNER}/{repo}/git/trees/{base}", recursive=1) or {}
+        if not any(GENERATED_RE.search(item["path"]) for item in tree.get("tree", [])):
+            continue
+        repo_dir = fresh_clone(repo, tmp_dir("hygiene") / repo)
+        sh("git", "checkout", "-q", "-B", HYGIENE_BRANCH, cwd=repo_dir)
+        git_identity(repo_dir)
+        if not clean_generated(repo_dir):
+            continue
+        push(repo_dir, repo, HYGIENE_BRANCH, force=True)
+        gh.create_pr(repo, HYGIENE_BRANCH, base, "chore: retirer les fichiers générés et compléter .gitignore",
+                     "Des fichiers générés automatiquement (caches Python, environnements virtuels…) étaient "
+                     "suivis par git. Cette PR les retire du suivi, sans les supprimer du disque, et complète "
+                     "`.gitignore` pour qu'ils ne reviennent pas.\n\n"
+                     "🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement si la CI est verte.")
+        print(f"  + PR d'hygiène ouverte : {repo}")
+
+
+def sweep_branches(gh: GitHub, repos: list[str]) -> None:
+    """Supprime les branches de l'agent et de Dependabot dont toutes les PR sont closes.
+    Les autres branches (les tiennes) ne sont jamais touchées."""
+    for repo in repos:
+        base = gh.repo(repo)["default_branch"]
+        for branch in gh.get(f"/repos/{OWNER}/{repo}/branches", per_page=100) or []:
+            name = branch["name"]
+            if name == base or not name.startswith(("agent/", "dependabot/")):
+                continue
+            prs = gh.get(f"/repos/{OWNER}/{repo}/pulls", head=f"{OWNER}:{name}", state="all") or []
+            if prs and all(p["state"] == "closed" for p in prs):
+                gh.delete_branch(repo, name)
+                print(f"  🧹 branche supprimée : {repo}/{name}")
 
 
 # --------------------------------------------------------------------------- bilan
@@ -928,6 +1008,9 @@ def main() -> None:
             dependabot(gh, state, public)
         print("\n— Alerte du Réparateur dans chaque repo")
         ensure_alerts(gh, state, public)
+        print("\n— Hygiène : fichiers générés et branches mergées")
+        ensure_hygiene(gh, state, public)
+        sweep_branches(gh, public)
         print("\n— Annulations faites par le Réparateur")
         watch(gh, state)
 

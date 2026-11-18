@@ -73,6 +73,10 @@ sans code.
 - **Failles de sécurité** : détails uniquement dans le repo privé `audit-securite`.
 - **Dependabot** : mises à jour non majeures mergées si la CI est verte, une par repo et
   par heure. Les versions majeures restent à ma décision.
+- **Hygiène** : aucun fichier généré (`__pycache__`, `*.pyc`, caches, environnements virtuels)
+  n'est commité ; ceux déjà présents sont retirés par une PR technique et `.gitignore` est
+  complété. Les branches `agent/…` et `dependabot/…` sont supprimées une fois leur PR close
+  (mes propres branches ne sont jamais touchées).
 - Les tokens GitHub ne sont jamais transmis à Claude. Seules les issues créées par mon
   compte, et mes propres clics, déclenchent l'agent.
 
