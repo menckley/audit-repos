@@ -27,6 +27,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "pricer",
+      "number": 9,
+      "url": "https://github.com/menckley/pricer/pull/9",
+      "branch": "agent/journal-pricings-publics-donnees-commerciales",
+      "title": "[pricer] Le journal des pricings (marges, libellés clients) est poussé dans un dépôt devenu public",
+      "issue_repo": "audit-securite",
+      "issue": 1,
+      "security": true,
+      "opened": "2026-11-18T07:54:31+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [],
