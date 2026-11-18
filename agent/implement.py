@@ -443,11 +443,22 @@ def ci_first(gh: GitHub, state: dict, queue: list, open_issues: list[dict]) -> l
 # --------------------------------------------------------------------------- PR en attente
 
 
+def pull_with_mergeable(gh: GitHub, repo: str, number: int) -> dict:
+    """GitHub calcule « mergeable » à la demande : on repose la question quelques fois."""
+    pr = gh.pull(repo, number)
+    for _ in range(6):
+        if pr.get("mergeable") is not None or pr.get("state") != "open":
+            break
+        time.sleep(5)
+        pr = gh.pull(repo, number)
+    return pr
+
+
 def advance_pending(gh: GitHub, state: dict, can_claude: bool) -> bool:
     """Fait avancer les PR ouvertes par l'agent. Renvoie False si le quota a été épuisé."""
     for entry in list(state["pending"]):
         target, number = entry["target"], entry["number"]
-        pr = gh.pull(target, number)
+        pr = pull_with_mergeable(gh, target, number)
         if pr["merged"]:
             finish_merged(gh, state, entry, pr.get("merge_commit_sha"))
             continue
@@ -558,7 +569,7 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
                 continue
             if status != "success" or merged_one:
                 continue
-            full = gh.pull(repo, pr["number"])
+            full = pull_with_mergeable(gh, repo, pr["number"])
             if full["mergeable"] is False:
                 if once(state, f"rebase:{key}:{pr['head']['sha']}"):
                     gh.write("POST", f"/repos/{OWNER}/{repo}/issues/{pr['number']}/comments",
