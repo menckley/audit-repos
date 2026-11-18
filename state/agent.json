@@ -1,20 +1,5 @@
 {
-  "pending": [
-    {
-      "target": "settlements-eex",
-      "number": 7,
-      "url": "https://github.com/menckley/settlements-eex/pull/7",
-      "branch": "agent/tests-archive-et-workflow",
-      "title": "[settlements-eex] Compléter les tests d'archive.py (upsert, idempotence, rattrapage) et nettoyer les alertes ruff",
-      "issue_repo": "audit-repos",
-      "issue": 55,
-      "security": false,
-      "opened": "2026-11-18T13:07:48+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    }
-  ],
+  "pending": [],
   "watch": [
     {
       "target": "newsletter",
@@ -335,13 +320,23 @@
       "issue_repo": null,
       "issue": null,
       "security": false
+    },
+    {
+      "target": "settlements-eex",
+      "sha": "80b5c937c787cf32fce86b92d855510dd99ec573",
+      "merged": "2026-11-18T15:38:43+00:00",
+      "pr": "https://github.com/menckley/settlements-eex/pull/7",
+      "title": "[settlements-eex] Compléter les tests d'archive.py (upsert, idempotence, rattrapage) et nettoyer les alertes ruff",
+      "issue_repo": "audit-repos",
+      "issue": 55,
+      "security": false
     }
   ],
   "log": [
     {
       "type": "clarify",
       "at": "2026-11-18T07:56:31+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "issue": "https://github.com/menckley/audit-securite/issues/6",
       "security": true,
@@ -350,7 +345,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T08:30:00+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Ajouter une CI (tests sur les Pull Requests)",
       "pr": "https://github.com/menckley/newsletter/pull/1",
       "issue": "https://github.com/menckley/audit-repos/issues/61",
@@ -360,7 +355,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T08:30:09+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[menckleys-projects] Ajouter une CI (tests sur les Pull Requests)",
       "pr": "https://github.com/menckley/menckleys-projects/pull/1",
       "issue": "https://github.com/menckley/audit-repos/issues/60",
@@ -370,7 +365,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T08:30:18+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/pricer/pull/9",
       "issue": "https://github.com/menckley/audit-securite/issues/1",
@@ -380,7 +375,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T08:38:28+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/checkout from 4 to 7",
       "pr": "https://github.com/menckley/menckleys-projects/pull/2",
       "repo": "menckleys-projects"
@@ -388,7 +383,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T08:38:32+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5 to 7",
       "pr": "https://github.com/menckley/newsletter/pull/2",
       "repo": "newsletter"
@@ -396,7 +391,7 @@
     {
       "type": "review",
       "at": "2026-11-18T09:16:07+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/pricer/pull/10",
       "issue": "https://github.com/menckley/audit-securite/issues/2",
@@ -406,7 +401,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:16:15+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[pricer] Dépendances sans borne haute ni verrouillage ; power-hpfc hors pyproject",
       "pr": "https://github.com/menckley/pricer/pull/11",
       "issue": "https://github.com/menckley/audit-repos/issues/3",
@@ -416,7 +411,7 @@
     {
       "type": "clarify",
       "at": "2026-11-18T09:20:48+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
       "issue": "https://github.com/menckley/audit-repos/issues/27",
       "security": false,
@@ -425,7 +420,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T09:22:33+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5 to 7",
       "pr": "https://github.com/menckley/menckleys-projects/pull/3",
       "repo": "menckleys-projects"
@@ -433,7 +428,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T09:22:36+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/checkout from 4 to 7",
       "pr": "https://github.com/menckley/newsletter/pull/3",
       "repo": "newsletter"
@@ -441,7 +436,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:32:03+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[pricer] CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
       "pr": "https://github.com/menckley/pricer/pull/12",
       "issue": "https://github.com/menckley/audit-repos/issues/39",
@@ -451,7 +446,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:48:55+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/menckleys-projects/pull/4",
       "issue": "https://github.com/menckley/audit-securite/issues/3",
@@ -461,7 +456,7 @@
     {
       "type": "review",
       "at": "2026-11-18T09:49:02+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/newsletter/pull/4",
       "issue": "https://github.com/menckley/audit-securite/issues/4",
@@ -471,7 +466,7 @@
     {
       "type": "review",
       "at": "2026-11-18T09:49:13+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
       "pr": "https://github.com/menckley/menckleys-projects/pull/5",
       "issue": "https://github.com/menckley/audit-repos/issues/10",
@@ -481,7 +476,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:49:21+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Le job reste vert quand la génération échoue ; aucune alerte si l'e-mail d'erreur échoue aussi",
       "pr": "https://github.com/menckley/newsletter/pull/5",
       "issue": "https://github.com/menckley/audit-repos/issues/16",
@@ -491,7 +486,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:49:35+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] requirements.txt sans versions : builds non reproductibles",
       "pr": "https://github.com/menckley/newsletter/pull/6",
       "issue": "https://github.com/menckley/audit-repos/issues/17",
@@ -501,7 +496,7 @@
     {
       "type": "review",
       "at": "2026-11-18T09:49:46+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
       "pr": "https://github.com/menckley/newsletter/pull/7",
       "issue": "https://github.com/menckley/audit-repos/issues/18",
@@ -511,7 +506,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:49:59+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Pas de README ; commentaire du cron contradictoire (8h00 vs 5h00)",
       "pr": "https://github.com/menckley/newsletter/pull/8",
       "issue": "https://github.com/menckley/audit-repos/issues/22",
@@ -521,7 +516,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:50:08+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/pricer/pull/13",
       "issue": "https://github.com/menckley/audit-securite/issues/6",
@@ -531,7 +526,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:50:16+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
       "pr": "https://github.com/menckley/power-hpfc/pull/1",
       "issue": "https://github.com/menckley/audit-repos/issues/27",
@@ -541,7 +536,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:50:25+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[projet-ttf-geopolitique] Ajouter une CI GitHub Actions (pytest + ruff)",
       "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/1",
       "issue": "https://github.com/menckley/audit-repos/issues/41",
@@ -551,7 +546,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T09:50:33+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[settlements-eex] Dépendances non épinglées, pas de CI de tests/lint, actions non épinglées par SHA",
       "pr": "https://github.com/menckley/settlements-eex/pull/1",
       "issue": "https://github.com/menckley/audit-repos/issues/53",
@@ -561,7 +556,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T09:57:09+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/power-hpfc/pull/2",
       "repo": "power-hpfc"
@@ -569,7 +564,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T09:57:14+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
       "pr": "https://github.com/menckley/settlements-eex/pull/2",
       "repo": "settlements-eex"
@@ -577,7 +572,7 @@
     {
       "type": "dependabot_major",
       "at": "2026-11-18T09:57:14+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump python-dateutil from 2.9.0.post0 to 4.0.0",
       "pr": "https://github.com/menckley/settlements-eex/pull/4",
       "repo": "settlements-eex"
@@ -585,7 +580,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T10:04:20+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/power-hpfc/pull/4",
       "issue": "https://github.com/menckley/audit-securite/issues/5",
@@ -595,7 +590,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T10:04:33+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/settlements-eex/pull/5",
       "issue": "https://github.com/menckley/audit-securite/issues/7",
@@ -605,7 +600,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T10:04:47+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
       "pr": "https://github.com/menckley/power-hpfc/pull/5",
       "issue": "https://github.com/menckley/audit-repos/issues/25",
@@ -615,7 +610,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T10:05:00+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Dépendances sans borne haute ni lockfile (run quotidien et app)",
       "pr": "https://github.com/menckley/power-hpfc/pull/6",
       "issue": "https://github.com/menckley/audit-repos/issues/28",
@@ -625,7 +620,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T10:05:14+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
       "pr": "https://github.com/menckley/power-hpfc/pull/7",
       "issue": "https://github.com/menckley/audit-repos/issues/35",
@@ -635,7 +630,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T10:13:41+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
       "pr": "https://github.com/menckley/power-hpfc/pull/3",
       "repo": "power-hpfc"
@@ -643,7 +638,7 @@
     {
       "type": "dependabot_major",
       "at": "2026-11-18T10:13:41+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump python-dateutil from 2.9.0.post0 to 4.0.0",
       "pr": "https://github.com/menckley/power-hpfc/pull/9",
       "repo": "power-hpfc"
@@ -651,7 +646,7 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T10:13:45+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/settlements-eex/pull/3",
       "repo": "settlements-eex"
@@ -659,7 +654,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T13:06:07+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
       "pr": "https://github.com/menckley/menckleys-projects/pull/5",
       "issue": "https://github.com/menckley/audit-repos/issues/10",
@@ -669,7 +664,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T13:06:15+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
       "pr": "https://github.com/menckley/newsletter/pull/7",
       "issue": "https://github.com/menckley/audit-repos/issues/18",
@@ -679,7 +674,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T13:06:22+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[projet-ttf-geopolitique] Factoriser la gestion HTTP (retries, backoff) commune aux collecteurs",
       "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/2",
       "issue": "https://github.com/menckley/audit-repos/issues/45",
@@ -689,7 +684,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T13:06:35+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[projet-ttf-geopolitique] Compléter le README : tests, versions, schémas de données",
       "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/3",
       "issue": "https://github.com/menckley/audit-repos/issues/50",
@@ -699,7 +694,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T13:06:49+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[settlements-eex] Le workflow reste vert quand la collecte échoue ou que l'API EEX ne renvoie rien",
       "pr": "https://github.com/menckley/settlements-eex/pull/6",
       "issue": "https://github.com/menckley/audit-repos/issues/51",
@@ -709,13 +704,23 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-18T13:07:57+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/power-hpfc/pull/8",
       "repo": "power-hpfc"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T15:38:43+00:00",
+      "reported": true,
+      "title": "[settlements-eex] Compléter les tests d'archive.py (upsert, idempotence, rattrapage) et nettoyer les alertes ruff",
+      "pr": "https://github.com/menckley/settlements-eex/pull/7",
+      "issue": "https://github.com/menckley/audit-repos/issues/55",
+      "security": false,
+      "repo": "settlements-eex"
     }
   ],
-  "last_bilan": null,
+  "last_bilan": "2026-11-18T15:39:18+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9"
