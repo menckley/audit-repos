@@ -69,6 +69,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "newsletter",
+      "number": 5,
+      "url": "https://github.com/menckley/newsletter/pull/5",
+      "branch": "agent/workflow-echec-silencieux",
+      "title": "[newsletter] Le job reste vert quand la génération échoue ; aucune alerte si l'e-mail d'erreur échoue aussi",
+      "issue_repo": "audit-repos",
+      "issue": 16,
+      "security": false,
+      "opened": "2026-11-18T08:38:19+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
