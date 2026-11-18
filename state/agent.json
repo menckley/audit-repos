@@ -1,71 +1,15 @@
 {
   "pending": [
     {
-      "target": "menckleys-projects",
-      "number": 5,
-      "url": "https://github.com/menckley/menckleys-projects/pull/5",
-      "branch": "agent/pricers-en-module-python-teste",
-      "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
-      "issue_repo": "audit-repos",
-      "issue": 10,
-      "security": false,
-      "opened": "2026-11-18T10:07:03+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "newsletter",
-      "number": 7,
-      "url": "https://github.com/menckley/newsletter/pull/7",
-      "branch": "agent/aucun-test-ni-ci",
-      "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
-      "issue_repo": "audit-repos",
-      "issue": 18,
-      "security": false,
-      "opened": "2026-11-18T10:08:41+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "projet-ttf-geopolitique",
-      "number": 2,
-      "url": "https://github.com/menckley/projet-ttf-geopolitique/pull/2",
-      "branch": "agent/collecte-http-retries-incoherents",
-      "title": "[projet-ttf-geopolitique] Factoriser la gestion HTTP (retries, backoff) commune aux collecteurs",
-      "issue_repo": "audit-repos",
-      "issue": 45,
-      "security": false,
-      "opened": "2026-11-18T10:11:11+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "projet-ttf-geopolitique",
-      "number": 3,
-      "url": "https://github.com/menckley/projet-ttf-geopolitique/pull/3",
-      "branch": "agent/readme-tests-et-documentation",
-      "title": "[projet-ttf-geopolitique] Compléter le README : tests, versions, schémas de données",
-      "issue_repo": "audit-repos",
-      "issue": 50,
-      "security": false,
-      "opened": "2026-11-18T10:12:22+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
       "target": "settlements-eex",
-      "number": 6,
-      "url": "https://github.com/menckley/settlements-eex/pull/6",
-      "branch": "agent/workflow-vert-malgre-echec-collecte",
-      "title": "[settlements-eex] Le workflow reste vert quand la collecte échoue ou que l'API EEX ne renvoie rien",
+      "number": 7,
+      "url": "https://github.com/menckley/settlements-eex/pull/7",
+      "branch": "agent/tests-archive-et-workflow",
+      "title": "[settlements-eex] Compléter les tests d'archive.py (upsert, idempotence, rattrapage) et nettoyer les alertes ruff",
       "issue_repo": "audit-repos",
-      "issue": 51,
+      "issue": 55,
       "security": false,
-      "opened": "2026-11-18T10:13:33+00:00",
+      "opened": "2026-11-18T13:07:48+00:00",
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
@@ -330,6 +274,56 @@
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "issue_repo": null,
       "issue": null,
+      "security": false
+    },
+    {
+      "target": "menckleys-projects",
+      "sha": "243089796b447e174162e42aea079ea6f54873a9",
+      "merged": "2026-11-18T13:06:07+00:00",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/5",
+      "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
+      "issue_repo": "audit-repos",
+      "issue": 10,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "06e7065531b2aba12a9298fdcc9e36e5e9d1b5bf",
+      "merged": "2026-11-18T13:06:15+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/7",
+      "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
+      "issue_repo": "audit-repos",
+      "issue": 18,
+      "security": false
+    },
+    {
+      "target": "projet-ttf-geopolitique",
+      "sha": "c53b5822374a222f626bd8e0ecfb5b1d1fc4ad8b",
+      "merged": "2026-11-18T13:06:22+00:00",
+      "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/2",
+      "title": "[projet-ttf-geopolitique] Factoriser la gestion HTTP (retries, backoff) commune aux collecteurs",
+      "issue_repo": "audit-repos",
+      "issue": 45,
+      "security": false
+    },
+    {
+      "target": "projet-ttf-geopolitique",
+      "sha": "8717a45f8f476e7c7626e5e0a34b0e66affd9fac",
+      "merged": "2026-11-18T13:06:35+00:00",
+      "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/3",
+      "title": "[projet-ttf-geopolitique] Compléter le README : tests, versions, schémas de données",
+      "issue_repo": "audit-repos",
+      "issue": 50,
+      "security": false
+    },
+    {
+      "target": "settlements-eex",
+      "sha": "66933eafc4c62860be7e71f7c052bdd31c9543bf",
+      "merged": "2026-11-18T13:06:49+00:00",
+      "pr": "https://github.com/menckley/settlements-eex/pull/6",
+      "title": "[settlements-eex] Le workflow reste vert quand la collecte échoue ou que l'API EEX ne renvoie rien",
+      "issue_repo": "audit-repos",
+      "issue": 51,
       "security": false
     }
   ],
@@ -650,6 +644,56 @@
       "reported": false,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/settlements-eex/pull/3",
+      "repo": "settlements-eex"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T13:06:07+00:00",
+      "reported": false,
+      "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/5",
+      "issue": "https://github.com/menckley/audit-repos/issues/10",
+      "security": false,
+      "repo": "menckleys-projects"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T13:06:15+00:00",
+      "reported": false,
+      "title": "[newsletter] Aucun test ni CI de qualité sur une logique de filtrage riche en regex",
+      "pr": "https://github.com/menckley/newsletter/pull/7",
+      "issue": "https://github.com/menckley/audit-repos/issues/18",
+      "security": false,
+      "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T13:06:22+00:00",
+      "reported": false,
+      "title": "[projet-ttf-geopolitique] Factoriser la gestion HTTP (retries, backoff) commune aux collecteurs",
+      "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/2",
+      "issue": "https://github.com/menckley/audit-repos/issues/45",
+      "security": false,
+      "repo": "projet-ttf-geopolitique"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T13:06:35+00:00",
+      "reported": false,
+      "title": "[projet-ttf-geopolitique] Compléter le README : tests, versions, schémas de données",
+      "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/3",
+      "issue": "https://github.com/menckley/audit-repos/issues/50",
+      "security": false,
+      "repo": "projet-ttf-geopolitique"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T13:06:49+00:00",
+      "reported": false,
+      "title": "[settlements-eex] Le workflow reste vert quand la collecte échoue ou que l'API EEX ne renvoie rien",
+      "pr": "https://github.com/menckley/settlements-eex/pull/6",
+      "issue": "https://github.com/menckley/audit-repos/issues/51",
+      "security": false,
       "repo": "settlements-eex"
     }
   ],
