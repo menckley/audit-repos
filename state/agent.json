@@ -27,6 +27,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "power-hpfc",
+      "number": 5,
+      "url": "https://github.com/menckley/power-hpfc/pull/5",
+      "branch": "agent/daily-sans-alerte-echec",
+      "title": "[power-hpfc] Workflow quotidien : échecs silencieux et pas d'alerte de fraîcheur",
+      "issue_repo": "audit-repos",
+      "issue": 25,
+      "security": false,
+      "opened": "2026-11-18T09:54:00+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
