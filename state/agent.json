@@ -241,6 +241,26 @@
       "issue_repo": "audit-repos",
       "issue": 53,
       "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "607faf2b7b01cceafdccbe88db50006514d66f0e",
+      "merged": "2026-11-18T09:57:09+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/2",
+      "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
+    },
+    {
+      "target": "settlements-eex",
+      "sha": "54eccd806dabe85ee97a04cfb0713a7341239468",
+      "merged": "2026-11-18T09:57:14+00:00",
+      "pr": "https://github.com/menckley/settlements-eex/pull/2",
+      "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -463,8 +483,34 @@
       "issue": "https://github.com/menckley/audit-repos/issues/53",
       "security": false,
       "repo": "settlements-eex"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T09:57:09+00:00",
+      "reported": false,
+      "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
+      "pr": "https://github.com/menckley/power-hpfc/pull/2",
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T09:57:14+00:00",
+      "reported": false,
+      "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
+      "pr": "https://github.com/menckley/settlements-eex/pull/2",
+      "repo": "settlements-eex"
+    },
+    {
+      "type": "dependabot_major",
+      "at": "2026-11-18T09:57:14+00:00",
+      "reported": false,
+      "title": "Bump python-dateutil from 2.9.0.post0 to 4.0.0",
+      "pr": "https://github.com/menckley/settlements-eex/pull/4",
+      "repo": "settlements-eex"
     }
   ],
   "last_bilan": null,
-  "seen": []
+  "seen": [
+    "major:settlements-eex#4"
+  ]
 }
