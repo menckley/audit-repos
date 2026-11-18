@@ -41,6 +41,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "projet-ttf-geopolitique",
+      "number": 3,
+      "url": "https://github.com/menckley/projet-ttf-geopolitique/pull/3",
+      "branch": "agent/readme-tests-et-documentation",
+      "title": "[projet-ttf-geopolitique] Compléter le README : tests, versions, schémas de données",
+      "issue_repo": "audit-repos",
+      "issue": 50,
+      "security": false,
+      "opened": "2026-11-18T10:12:22+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
