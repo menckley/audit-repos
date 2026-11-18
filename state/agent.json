@@ -115,6 +115,26 @@
       "issue_repo": "audit-securite",
       "issue": 1,
       "security": true
+    },
+    {
+      "target": "menckleys-projects",
+      "sha": "a2ef9e240ab7147fcd5befbdab7a908d2a11d87a",
+      "merged": "2026-11-18T08:38:28+00:00",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/2",
+      "title": "Bump actions/checkout from 4 to 7",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "0b29597e4702cc2b006f735881d9cb5b29cc2db2",
+      "merged": "2026-11-18T08:38:32+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/2",
+      "title": "Bump actions/setup-python from 5 to 7",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -156,6 +176,22 @@
       "issue": "https://github.com/menckley/audit-securite/issues/1",
       "security": true,
       "repo": "pricer"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T08:38:28+00:00",
+      "reported": false,
+      "title": "Bump actions/checkout from 4 to 7",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/2",
+      "repo": "menckleys-projects"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T08:38:32+00:00",
+      "reported": false,
+      "title": "Bump actions/setup-python from 5 to 7",
+      "pr": "https://github.com/menckley/newsletter/pull/2",
+      "repo": "newsletter"
     }
   ],
   "last_bilan": null,
