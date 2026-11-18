@@ -838,6 +838,60 @@
       "issue": "https://github.com/menckley/audit-repos/issues/52",
       "security": false,
       "repo": "settlements-eex"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:52:44+00:00",
+      "reported": false,
+      "title": "[menckleys-projects] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/menckleys-projects/pull/6",
+      "repo": "menckleys-projects",
+      "security": false
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:52:48+00:00",
+      "reported": false,
+      "title": "[newsletter] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/newsletter/pull/10",
+      "repo": "newsletter",
+      "security": false
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:52:53+00:00",
+      "reported": false,
+      "title": "[power-hpfc] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/power-hpfc/pull/15",
+      "repo": "power-hpfc",
+      "security": false
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:52:57+00:00",
+      "reported": false,
+      "title": "[pricer] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/pricer/pull/16",
+      "repo": "pricer",
+      "security": false
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:53:02+00:00",
+      "reported": false,
+      "title": "[projet-ttf-geopolitique] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/4",
+      "repo": "projet-ttf-geopolitique",
+      "security": false
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:53:06+00:00",
+      "reported": false,
+      "title": "[settlements-eex] Alerte du Réparateur installée",
+      "pr": "https://github.com/menckley/settlements-eex/pull/9",
+      "repo": "settlements-eex",
+      "security": false
     }
   ],
   "last_bilan": "2026-11-18T15:39:18+00:00",
