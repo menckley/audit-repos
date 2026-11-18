@@ -83,6 +83,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "newsletter",
+      "number": 8,
+      "url": "https://github.com/menckley/newsletter/pull/8",
+      "branch": "agent/readme-et-commentaire-cron-perimes",
+      "title": "[newsletter] Pas de README ; commentaire du cron contradictoire (8h00 vs 5h00)",
+      "issue_repo": "audit-repos",
+      "issue": 22,
+      "security": false,
+      "opened": "2026-11-18T09:19:51+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
