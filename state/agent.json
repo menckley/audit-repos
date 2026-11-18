@@ -236,6 +236,15 @@
       "issue": "https://github.com/menckley/audit-repos/issues/3",
       "security": false,
       "repo": "pricer"
+    },
+    {
+      "type": "clarify",
+      "at": "2026-11-18T09:20:48+00:00",
+      "reported": false,
+      "title": "[power-hpfc] Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
+      "issue": "https://github.com/menckley/audit-repos/issues/27",
+      "security": false,
+      "detail": "## Contexte\n\nAucun commit n'a été fait. La tâche demande d'épingler `actions/checkout` et `actions/setup-python` par SHA de commit. Dans cet environnement, je n'ai pas pu interroger GitHub (`gh api` et `git ls-remote` ont été refusés faute d'approbation). Écrire des SHA de mémoire est trop risqué: u\n[… tronqué, 1214 caractères de plus]"
     }
   ],
   "last_bilan": null,
