@@ -325,6 +325,16 @@
       "issue_repo": "audit-repos",
       "issue": 51,
       "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "247854a087dc908303f25c5680ee6b0226fb175f",
+      "merged": "2026-11-18T13:07:57+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/8",
+      "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -695,6 +705,14 @@
       "issue": "https://github.com/menckley/audit-repos/issues/51",
       "security": false,
       "repo": "settlements-eex"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-18T13:07:57+00:00",
+      "reported": false,
+      "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
+      "pr": "https://github.com/menckley/power-hpfc/pull/8",
+      "repo": "power-hpfc"
     }
   ],
   "last_bilan": null,
