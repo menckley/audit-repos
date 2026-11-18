@@ -55,6 +55,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "menckleys-projects",
+      "number": 5,
+      "url": "https://github.com/menckley/menckleys-projects/pull/5",
+      "branch": "agent/pricers-en-module-python-teste",
+      "title": "[menckleys-projects] Extraire les pricers du notebook en module testé + CI",
+      "issue_repo": "audit-repos",
+      "issue": 10,
+      "security": false,
+      "opened": "2026-11-18T08:37:29+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
