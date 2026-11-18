@@ -39,9 +39,9 @@ Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développ
 
 - **📋 Récap d'audit** (début de mois) : ce qui sera traité automatiquement et ce qui
   attend ma décision.
-- **🛠️ Bilan automatique**, une fois le travail terminé (au plus un toutes les 12 h) :
-  ce qui a été mergé, annulé, ce qui demande mon attention, et les actions hors code
-  que je suis seul à pouvoir faire (ex. révoquer un secret).
+- **🛠️ Bilan automatique**, dès que le Développeur n'a plus rien à faire seul (au plus un
+  toutes les 12 h) : en tête « ✅ Terminé » et « ⏳ T'attend », puis le détail. Seuls les
+  points encore ouverts au moment de l'envoi sont listés comme m'attendant.
 
 ## Décider d'une proposition
 
@@ -87,6 +87,11 @@ Secrets du repo (*Settings → Secrets and variables → Actions*) :
 - *Actions → 🔍 Auditeur → Run workflow* : audit complet (`repos` vide) ou d'un seul
   repo (`repos` = `pricer`, récap marqué « test »).
 - *Actions → 🛠️ Développeur → Run workflow* : fait avancer le travail sans attendre l'heure suivante.
+
+## Tests
+
+`python3 tests/test_agent.py` : scénarios hors ligne du Développeur (faux GitHub, sans
+Claude). Ils tournent aussi automatiquement à chaque modification de l'automatisation.
 
 ## Réglages
 

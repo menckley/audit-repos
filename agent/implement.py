@@ -679,7 +679,44 @@ def revert(gh: GitHub, state: dict, entry: dict, run: dict) -> None:
 # --------------------------------------------------------------------------- bilan
 
 
-def bilan_body(entries: list[dict]) -> str:
+ATTENTION_TYPES = ("human", "revert_failed", "reverted", "review", "clarify", "failed",
+                   "dependabot_major", "dependabot_red")
+PR_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/pull/(\d+)")
+ISSUE_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/issues/(\d+)")
+
+
+def still_waiting(gh: GitHub, e: dict) -> bool:
+    """Vrai si ce point attend encore le propriétaire au moment du bilan (il a pu se
+    régler depuis : PR mergée ou fermée, tâche relancée, issue fermée)."""
+    if e["type"] in ("human", "revert_failed"):
+        return True
+    try:
+        pr_ref = PR_URL_RE.search(e.get("pr") or "")
+        if pr_ref:
+            pr = gh.pull(pr_ref[1], int(pr_ref[2]))
+            if pr.get("merged") or pr.get("state") == "closed":
+                return False
+        issue_ref = ISSUE_URL_RE.search(e.get("issue") or "")
+        if issue_ref:
+            issue = gh.get(f"/repos/{OWNER}/{issue_ref[1]}/issues/{issue_ref[2]}")
+            labels = labels_of(issue)
+            if issue["state"] == "closed" or labels & {"en-cours", "pr-ouverte", "mergé", "approuvé"} \
+                    or LAUNCH_RE.search(issue.get("body") or ""):
+                return False
+    except GitHubError:
+        pass  # dans le doute, on le signale
+    return True
+
+
+def dedupe(entries: list[dict]) -> list[dict]:
+    """Garde le dernier événement de chaque sujet."""
+    last: dict[tuple, dict] = {}
+    for e in entries:
+        last[(e["type"], e.get("pr") or e.get("issue") or e.get("title"))] = e
+    return list(last.values())
+
+
+def bilan_body(done: list[dict], waiting: list[dict]) -> str:
     def name(e: dict) -> str:
         if e.get("security"):
             return f"Correctif de sécurité ([détails privés]({e['issue']}))" if e.get("issue") \
@@ -691,42 +728,68 @@ def bilan_body(entries: list[dict]) -> str:
                                         f"[issue]({e['issue']})" if e.get("issue") and not e.get("security") else "") if x)
         return f"- {name(e)}{(' — ' + links) if links else ''}{extra}"
 
-    by = lambda t: [e for e in entries if e["type"] == t]  # noqa: E731
-    sections = [
-        ("👤 À faire par toi (hors code)", by("human"), lambda e: line(e, f"\n  > {e['detail']}")),
-        ("↩️ Annulé automatiquement", by("reverted"), lambda e: line(e, f" — {e['detail']}")),
-        ("🚨 Annulation impossible : à vérifier vite", by("revert_failed"),
-         lambda e: line(e, f" — {e['detail']}")),
-        ("✅ Mergé automatiquement", by("merged"), line),
-        ("📝 Analyses livrées", by("analysis"), line),
-        ("⚠️ À relire (PR laissée ouverte)", by("review"), lambda e: line(e, f" — {e['detail']}")),
-        ("🤔 Besoin de précisions", by("clarify"), line),
-        ("❌ Échecs techniques", by("failed"), lambda e: line(e, f" — {e['detail']}")),
-        ("📦 Dependabot : mises à jour mergées", by("dependabot_merged"), line),
-        ("📦 Dependabot : versions majeures laissées à ta décision", by("dependabot_major"), line),
-        ("📦 Dependabot : CI rouge, non mergé", by("dependabot_red"), line),
+    def detail(e: dict) -> str:
+        return f" — {e['detail']}" if e.get("detail") else ""
+
+    def of(items: list[dict], kind: str) -> list[dict]:
+        return [e for e in items if e["type"] == kind]
+
+    merged, deps = of(done, "merged"), of(done, "dependabot_merged")
+    security = sum(1 for e in merged if e.get("security"))
+    todo = [
+        ("👤 À faire par toi (hors code)", of(waiting, "human"),
+         lambda e: line(e, f"\n  > {e['detail']}")),
+        ("🚨 Annulation impossible : à vérifier vite", of(waiting, "revert_failed"),
+         lambda e: line(e, detail(e))),
+        ("↩️ Annulé automatiquement : commente puis coche **Lancer** pour réessayer",
+         of(waiting, "reverted"), lambda e: line(e, detail(e))),
+        ("⚠️ PR laissée ouverte : merge-la toi-même, ou coche **Lancer** pour que je recommence",
+         of(waiting, "review"), lambda e: line(e, detail(e))),
+        ("🤔 Besoin de précisions : commente puis coche **Lancer**", of(waiting, "clarify"), line),
+        ("❌ Échec technique : coche **Lancer** pour réessayer", of(waiting, "failed"),
+         lambda e: line(e, detail(e))),
+        ("📦 Dependabot, version majeure : merge la PR si elle te convient, sinon ferme-la",
+         of(waiting, "dependabot_major"), line),
+        ("📦 Dependabot, CI rouge : à regarder", of(waiting, "dependabot_red"), line),
     ]
-    merged = len(by("merged")) + len(by("dependabot_merged"))
-    attention = len(by("human")) + len(by("reverted")) + len(by("revert_failed")) + len(by("review"))
-    lines = [f"@{OWNER} ici le Développeur 🛠️ : voici le bilan de mon travail.", "",
-             f"**{merged} changement(s) mergé(s)** · **{attention} point(s) demandant ton attention**."]
-    for title, items, fmt in sections:
+    finished = [
+        ("Mergé automatiquement", merged, line),
+        ("Analyses livrées", of(done, "analysis"), line),
+        ("Mises à jour Dependabot mergées", deps, line),
+    ]
+    count = sum(len(items) for _, items, _ in todo)
+    lines = [f"@{OWNER} ici le Développeur 🛠️ : j'ai fini tout ce que je pouvais faire seul.", "",
+             f"✅ **Terminé : {len(merged) + len(deps)} changement(s) mergé(s)**"
+             f" (dont {security} correctif(s) de sécurité et {len(deps)} mise(s) à jour Dependabot)",
+             f"⏳ **T'attend : {count} point(s)**" if count else "⏳ **Rien ne t'attend.** 🎉"]
+    if count:
+        lines += ["", "# ⏳ Ce qui t'attend"]
+        for title, items, fmt in todo:
+            if items:
+                lines += ["", f"### {title}"] + [fmt(e) for e in items]
+    lines += ["", "# ✅ Ce qui est fait"]
+    for title, items, fmt in finished:
         if items:
-            lines += ["", f"## {title}"] + [fmt(e) for e in items]
-    lines += ["", "_— 🛠️ Le Développeur (Claude Code)_"]
+            lines += ["", f"### {title}"] + [fmt(e) for e in items]
+    lines += ["", "_Les merges restent surveillés 48 h : si un workflow casse, le changement "
+              "est annulé automatiquement et tu en es informé._", "",
+              "_— 🛠️ Le Développeur (Claude Code)_"]
     return "\n".join(lines)
 
 
-def maybe_bilan(bot: GitHub, state: dict, busy: bool) -> None:
+def maybe_bilan(gh: GitHub, bot: GitHub, state: dict, busy: bool) -> None:
     entries = [e for e in state["log"] if not e["reported"]]
     if busy or not entries:
         return
     if state["last_bilan"] and now() - parse(state["last_bilan"]) < timedelta(
             hours=CONFIG["bilan_min_interval_hours"]):
         return
+    entries = dedupe(entries)
+    done = [e for e in entries if e["type"] not in ATTENTION_TYPES]
+    waiting = [e for e in entries if e["type"] in ATTENTION_TYPES and still_waiting(gh, e)]
     issue = bot.create_issue(PUBLIC_REPO, f"🛠️ Bilan automatique du {now():%d/%m/%Y}",
-                             bilan_body(entries), ["bilan"])
-    for e in entries:
+                             bilan_body(done, waiting), ["bilan"])
+    for e in state["log"]:
         e["reported"] = True
     state["last_bilan"] = iso(now())
     print(f"\nBilan publié : {issue['html_url']}")
@@ -791,7 +854,7 @@ def main() -> None:
         watch(gh, state)
 
         busy = bool(state["pending"]) or started < len(queue)
-        maybe_bilan(bot, state, busy)
+        maybe_bilan(gh, bot, state, busy)
     finally:
         save_state(state)
 
