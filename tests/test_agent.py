@@ -244,29 +244,50 @@ def main():
     assert sum(e["type"] == "dependabot_major" for e in st["log"]) == 1, "majeure signalée une fois"
     print("OK 8 Dependabot")
 
-    # --- 9. surveillance : un workflow casse après le merge → annulation
-    gh.runs["pricer"] = [{"workflow_id": 5, "event": "schedule", "status": "completed", "conclusion": "failure",
-                          "created_at": ago(minutes=5), "name": "collecte", "html_url": "https://run/1"}]
-    gh.wf_before[5] = [{"status": "completed", "conclusion": "success"}]
-    st["watch"] = st["watch"][:1]
+    # --- 9. surveillance : seul le commit coupable est annulé
+    def run(wf, conclusion, sha, minutes, name="CI", event="push"):
+        return {"id": hash((wf, sha, minutes)) % 10**6, "workflow_id": wf, "event": event,
+                "status": "completed", "conclusion": conclusion, "head_sha": sha,
+                "created_at": ago(minutes=minutes), "name": name, "html_url": f"https://run/{sha}"}
+
     commands = []
     im.fresh_clone = lambda repo, dest: dest
     im.git_identity = lambda d: None
     im.push = lambda *a, **k: None
     im.sh = lambda *a, **k: commands.append(a) or ""
+    agent_merge = st["watch"][0]          # merge de l'agent (sha m<n>)
+    sha = agent_merge["sha"]
+    st["watch"] = [agent_merge, {"target": "pricer", "sha": "dep1", "merged": ago(minutes=40), "pr": "d",
+                                 "title": "Bump x", "issue_repo": None, "issue": None, "security": False}]
+
+    # 9a. scénario du 18/11 : un merge extérieur (« user1 ») casse la CI → rien n'est annulé
+    gh.runs["pricer"] = [run(1, "success", "dep1", 40), run(1, "success", sha, 30),
+                         run(1, "failure", "user1", 20), run(1, "cancelled", "r1", 15),
+                         run(1, "failure", "r2", 10)]
     im.watch(gh, st)
-    assert any(a[:3] == ("git", "revert", "--no-edit") for a in commands) and st["log"][-1]["type"] == "reverted"
+    assert not any(a[:2] == ("git", "revert") for a in commands), "aucune annulation à tort"
+    assert st["log"][-1]["type"] == "broken_external" and "user1" in st["log"][-1]["detail"]
+    n = len(st["log"]); im.watch(gh, st)
+    assert len(st["log"]) == n, "alerte une seule fois"
+    print("OK 9a merge extérieur coupable : alerte, aucune annulation")
+
+    # 9b. le merge de l'agent est le premier commit en échec → lui seul est annulé
+    gh.runs["pricer"] = [run(2, "success", "dep1", 40), run(2, "failure", sha, 30),
+                         run(2, "failure", "later", 5)]
+    im.watch(gh, st)
+    reverted = [a for a in commands if a[:3] == ("git", "revert", "--no-edit")]
+    assert reverted == [("git", "revert", "--no-edit", sha)], reverted
+    assert st["log"][-1]["type"] == "reverted" and [w["sha"] for w in st["watch"]] == ["dep1"]
     assert b3["state"] == "open" and "annulé" in labels(b3) and "- [ ] ✅ **Lancer**" in b3["body"]
-    print("OK 9 annulation automatique")
-    st["watch"].append({"target": "pricer", "sha": "z", "merged": ago(minutes=30), "pr": "p", "title": "t",
-                        "issue_repo": None, "issue": None, "security": False})
-    gh.runs["pricer"].append({"workflow_id": 5, "event": "schedule", "status": "completed",
-                              "conclusion": "success", "created_at": ago(minutes=1), "name": "collecte",
-                              "html_url": "x"})
-    n = len(commands)
+    print("OK 9b merge de l'agent coupable : lui seul est annulé")
+
+    # 9c. échec puis succès (transitoire), ou workflow jamais réussi → rien
+    gh.runs["pricer"] = [run(3, "success", "a", 30), run(3, "failure", "dep1", 20), run(3, "success", "b", 5)]
+    n = len(commands); im.watch(gh, st)
+    gh.runs["pricer"] = [run(4, "failure", "dep1", 20), run(4, "failure", "c", 5)]
     im.watch(gh, st)
-    assert len(commands) == n, "échec transitoire ignoré"
-    print("OK 9b échec transitoire ignoré")
+    assert len(commands) == n, "rien à annuler"
+    print("OK 9c échec transitoire ou workflow jamais vert : rien n'est annulé")
 
     # --- 10. confidentialité et bilan
     im.log(st, "human", title="[pricer] faille X", issue="https://github.com/menckley/audit-securite/issues/1",
@@ -279,7 +300,7 @@ def main():
     assert "🛠️ Bilan" in gh.created[-1] and all(e["reported"] for e in st["log"])
     assert "Terminé :" in body and "T'attend :" in body and "Ce qui t'attend" in body
     assert "À faire par toi" in body and "Correctif de sécurité" in body and "faille X" not in body
-    assert "Annulé automatiquement" in body
+    assert "Annulé automatiquement" in body and "pas de moi" in body
     im.maybe_bilan(gh, gh, st, busy=False)
     assert sum("Bilan" in t for t in gh.created) == 1, "pas de doublon"
     print("OK 10 confidentialité et bilan")

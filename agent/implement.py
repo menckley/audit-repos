@@ -606,30 +606,53 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
 # --------------------------------------------------------------------------- surveillance
 
 
+BROKEN = {"failure", "timed_out", "startup_failure"}  # « cancelled » n'est pas un échec
+
+
+def first_failure(runs: list[dict]) -> dict | None:
+    """Pour un workflow : si son dernier run est en échec alors qu'il a déjà réussi, renvoie
+    le premier run en échec après le dernier succès. Son commit est le vrai coupable."""
+    done = sorted((r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"),
+                  key=lambda r: r["created_at"])
+    if not done or done[-1]["conclusion"] not in BROKEN:
+        return None
+    first = None
+    for run in reversed(done):
+        if run["conclusion"] == "success":
+            return first
+        if run["conclusion"] in BROKEN:
+            first = run
+    return None  # jamais réussi : rien à attribuer
+
+
 def watch(gh: GitHub, state: dict) -> None:
-    """Annule un merge de l'agent si un workflow de la branche principale casse ensuite."""
+    """Annule un merge de l'agent seulement s'il est le commit qui a fait passer un workflow
+    de la branche principale au rouge. Sinon, alerte sans rien annuler."""
     for entry in list(state["watch"]):
-        merged = parse(entry["merged"])
-        if now() - merged > timedelta(hours=CONFIG["watch_hours"]) or not entry.get("sha"):
+        expired = now() - parse(entry["merged"]) > timedelta(hours=CONFIG["watch_hours"])
+        if expired or not entry.get("sha"):
             state["watch"].remove(entry)
-            continue
-        target = entry["target"]
+    for target in sorted({e["target"] for e in state["watch"]}):
+        entries = [e for e in state["watch"] if e["target"] == target]
         base = gh.repo(target)["default_branch"]
-        after = [r for r in gh.workflow_runs(target, branch=base, created=f">={entry['merged']}")
-                 if r["event"] != "pull_request" and r["status"] == "completed"]
-        latest: dict[int, dict] = {}
-        for run in sorted(after, key=lambda r: r["created_at"]):
-            latest[run["workflow_id"]] = run
-        for wf_id, run in latest.items():
-            if run["conclusion"] not in BAD_CONCLUSIONS:
+        runs = [r for r in gh.workflow_runs(target, branch=base) if r["event"] != "pull_request"]
+        by_workflow: dict[int, list[dict]] = {}
+        for run in runs:
+            by_workflow.setdefault(run["workflow_id"], []).append(run)
+        for wf_id, wf_runs in by_workflow.items():
+            bad = first_failure(wf_runs)
+            if not bad:
                 continue
-            before = [r for r in gh.get(f"/repos/{OWNER}/{target}/actions/workflows/{wf_id}/runs",
-                                        branch=base, created=f"<{entry['merged']}",
-                                        per_page=5)["workflow_runs"]
-                      if r["status"] == "completed"]
-            if before and before[0]["conclusion"] == "success":
-                revert(gh, state, entry, run)
-                break
+            guilty = next((e for e in entries if e["sha"] == bad["head_sha"]), None)
+            if guilty:
+                revert(gh, state, guilty, bad)
+                break  # une annulation par repo et par passage, puis on revérifie
+            if once(state, f"broken:{target}:{bad['id']}"):
+                log(state, "broken_external", repo=target, workflow_id=wf_id, pr=None,
+                    title=f"`{target}` : le workflow « {bad['name']} » échoue",
+                    detail=f"en échec depuis le commit {bad['head_sha'][:7]}, qui n'est pas un "
+                           f"merge de l'agent : rien n'a été annulé ({bad['html_url']})")
+                print(f"  🚨 {target} : « {bad['name']} » cassé par {bad['head_sha'][:7]} (pas l'agent)")
 
 
 def revert(gh: GitHub, state: dict, entry: dict, run: dict) -> None:
@@ -679,7 +702,7 @@ def revert(gh: GitHub, state: dict, entry: dict, run: dict) -> None:
 # --------------------------------------------------------------------------- bilan
 
 
-ATTENTION_TYPES = ("human", "revert_failed", "reverted", "review", "clarify", "failed",
+ATTENTION_TYPES = ("human", "broken_external", "revert_failed", "reverted", "review", "clarify", "failed",
                    "dependabot_major", "dependabot_red")
 PR_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/pull/(\d+)")
 ISSUE_URL_RE = re.compile(r"github\.com/[^/]+/([^/]+)/issues/(\d+)")
@@ -691,6 +714,11 @@ def still_waiting(gh: GitHub, e: dict) -> bool:
     if e["type"] in ("human", "revert_failed"):
         return True
     try:
+        if e["type"] == "broken_external":
+            runs = gh.get(f"/repos/{OWNER}/{e['repo']}/actions/workflows/{e['workflow_id']}/runs",
+                          per_page=10)["workflow_runs"]
+            done = [r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"]
+            return not done or done[0]["conclusion"] != "success"
         pr_ref = PR_URL_RE.search(e.get("pr") or "")
         if pr_ref:
             pr = gh.pull(pr_ref[1], int(pr_ref[2]))
@@ -739,6 +767,8 @@ def bilan_body(done: list[dict], waiting: list[dict]) -> str:
     todo = [
         ("👤 À faire par toi (hors code)", of(waiting, "human"),
          lambda e: line(e, f"\n  > {e['detail']}")),
+        ("🚨 Workflow cassé par un changement qui n'est pas de moi : à regarder vite",
+         of(waiting, "broken_external"), lambda e: line(e, detail(e))),
         ("🚨 Annulation impossible : à vérifier vite", of(waiting, "revert_failed"),
          lambda e: line(e, detail(e))),
         ("↩️ Annulé automatiquement : commente puis coche **Lancer** pour réessayer",
