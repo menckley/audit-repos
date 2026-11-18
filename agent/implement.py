@@ -491,19 +491,36 @@ def advance_pending(gh: GitHub, state: dict, can_claude: bool) -> bool:
         elif pr["mergeable"] is None:
             continue  # GitHub calcule encore
         elif pr["mergeable"] is False:
-            if entry["branch_updated"]:
-                send_back(gh, state, entry, "conflit avec la branche principale.")
-            else:
+            if not entry["branch_updated"]:
                 entry["branch_updated"] = True
                 entry["opened"] = iso(now())
                 try:
                     gh.update_branch(target, number)
+                    continue
                 except GitHubError:
-                    send_back(gh, state, entry, "conflit avec la branche principale.")
+                    pass  # conflit réel : on refait la tâche
+            if once(state, f"redo:{target}#{number}"):
+                redo(gh, state, entry)
+            else:
+                send_back(gh, state, entry, "conflit avec la branche principale, même après "
+                          "avoir refait la tâche sur la version à jour.")
         else:
             merged = gh.merge_pr(target, number, pr["title"])
             finish_merged(gh, state, entry, merged.get("sha"))
     return True
+
+
+def redo(gh: GitHub, state: dict, entry: dict) -> None:
+    """Conflit : la tâche repart en file et sera refaite à partir de la branche principale
+    à jour (même branche, même PR)."""
+    state["pending"].remove(entry)
+    repo, number = entry["issue_repo"], entry["issue"]
+    issue = gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")
+    requeue = [] if "auto" in labels_of(issue) else ["approuvé"]
+    relabel(gh, repo, number, ["pr-ouverte"], requeue)
+    gh.comment(repo, number, "🔁 Conflit avec des changements mergés entre-temps : je refais la "
+               "tâche à partir de la version à jour.")
+    print(f"  🔁 à refaire (conflit) : {entry['url']}")
 
 
 def finish_merged(gh: GitHub, state: dict, entry: dict, sha: str | None) -> None:
