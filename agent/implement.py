@@ -71,7 +71,22 @@ def load_state() -> dict:
     return state
 
 
+SECURITY_TITLE = "Correctif de sécurité"
+
+
+def sanitize(entry: dict) -> None:
+    """Ce fichier d'état est public : aucun détail d'une faille ne doit y figurer."""
+    if not entry.get("security"):
+        return
+    entry["title"] = SECURITY_TITLE
+    for key in ("detail", "human"):
+        if entry.get(key):
+            entry[key] = "Voir l'issue privée."
+
+
 def save_state(state: dict) -> None:
+    for entry in state["pending"] + state["watch"] + state["log"]:
+        sanitize(entry)
     limit = iso(now() - timedelta(days=90))
     state["log"] = [e for e in state["log"] if not e.get("reported") or e["at"] >= limit]
     state["seen"] = state["seen"][-500:]
@@ -81,7 +96,9 @@ def save_state(state: dict) -> None:
 
 
 def log(state: dict, kind: str, **fields) -> None:
-    state["log"].append({"type": kind, "at": iso(now()), "reported": False, **fields})
+    entry = {"type": kind, "at": iso(now()), "reported": False, **fields}
+    sanitize(entry)
+    state["log"].append(entry)
 
 
 def once(state: dict, key: str) -> bool:
@@ -237,7 +254,7 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
         target, branch, base, title or f"Tâche d'audit {branch}", full_body)
 
 
-def fix_ci(gh: GitHub, entry: dict, failed: list[dict]) -> bool:
+def fix_ci(gh: GitHub, entry: dict, failed: list[dict], pr_title: str) -> bool:
     """Une tentative de correction d'une CI rouge. Vrai si un correctif a été poussé."""
     target, branch = entry["target"], entry["branch"]
     work = tmp_dir("fix")
@@ -245,7 +262,7 @@ def fix_ci(gh: GitHub, entry: dict, failed: list[dict]) -> bool:
     sh("git", "checkout", "-q", "-B", branch, f"origin/{branch}", cwd=repo_dir)
     git_identity(repo_dir)
     before = sh("git", "rev-parse", "HEAD", cwd=repo_dir).strip()
-    prompt = render("fix_ci.md", {"OWNER": OWNER, "REPO": target, "TITLE": entry["title"],
+    prompt = render("fix_ci.md", {"OWNER": OWNER, "REPO": target, "TITLE": pr_title,
                                    "FAILURES": failure_report(gh, target, failed)})
     run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
     if sh("git", "rev-parse", "HEAD", cwd=repo_dir).strip() == before:
@@ -310,6 +327,7 @@ def start_task(gh: GitHub, state: dict, repo: str, issue: dict, manual: bool) ->
             "fix_attempted": False, "branch_updated": False,
             "human": human_action(body),
         })
+        sanitize(state["pending"][-1])
         gh.comment(repo, number, f"🔧 Pull Request ouverte : {pr['html_url']}\n\n"
                    "Elle sera mergée automatiquement dès que la CI sera verte.")
         relabel(gh, repo, number, ["en-cours"], ["pr-ouverte"])
@@ -452,7 +470,7 @@ def advance_pending(gh: GitHub, state: dict, can_claude: bool) -> bool:
             try:
                 entry["fix_attempted"] = True
                 entry["opened"] = iso(now())
-                if not fix_ci(gh, entry, failed):
+                if not fix_ci(gh, entry, failed, pr["title"]):
                     send_back(gh, state, entry, "la CI est rouge et je n'ai pas trouvé de correction sûre.")
             except QuotaExhausted:
                 entry["fix_attempted"] = False
