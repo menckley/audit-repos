@@ -1,43 +1,15 @@
 {
   "pending": [
     {
-      "target": "pricer",
-      "number": 14,
-      "url": "https://github.com/menckley/pricer/pull/14",
-      "branch": "agent/backtest-et-calibration-prime-de-risque",
-      "title": "[pricer] Backtester les prix offerts contre le réalisé pour calibrer risque, déviation et marge",
+      "target": "settlements-eex",
+      "number": 8,
+      "url": "https://github.com/menckley/settlements-eex/pull/8",
+      "branch": "agent/alertes-seuils-et-courbe-gaz",
+      "title": "[settlements-eex] Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
       "issue_repo": "audit-repos",
-      "issue": 2,
+      "issue": 52,
       "security": false,
-      "opened": "2026-11-18T16:28:12+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "pricer",
-      "number": 15,
-      "url": "https://github.com/menckley/pricer/pull/15",
-      "branch": "agent/drapeau-pricing-test-et-qualite-journal",
-      "title": "[pricer] Distinguer pricings de test et pricings réels, avec statut du deal (gagné/perdu)",
-      "issue_repo": "audit-repos",
-      "issue": 4,
-      "security": false,
-      "opened": "2026-11-18T16:32:08+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
-      "target": "newsletter",
-      "number": 9,
-      "url": "https://github.com/menckley/newsletter/pull/9",
-      "branch": "agent/methode-attribution-et-verification",
-      "title": "[newsletter] Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
-      "issue_repo": "audit-repos",
-      "issue": 23,
-      "security": false,
-      "opened": "2026-11-18T16:34:09+00:00",
+      "opened": "2026-11-18T16:45:58+00:00",
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
@@ -333,6 +305,36 @@
       "issue_repo": "audit-securite",
       "issue": 4,
       "security": true
+    },
+    {
+      "target": "pricer",
+      "sha": "82f0292db4b28e9338523826bad7fec5e7f4f6e7",
+      "merged": "2026-11-18T16:39:46+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/14",
+      "title": "[pricer] Backtester les prix offerts contre le réalisé pour calibrer risque, déviation et marge",
+      "issue_repo": "audit-repos",
+      "issue": 2,
+      "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "1792fd9f02735b4903ed265b1c808e9b38989180",
+      "merged": "2026-11-18T16:40:00+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/15",
+      "title": "[pricer] Distinguer pricings de test et pricings réels, avec statut du deal (gagné/perdu)",
+      "issue_repo": "audit-repos",
+      "issue": 4,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "24e5e7846ec6643b58333bec1e1bd801c613673c",
+      "merged": "2026-11-18T16:40:08+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/9",
+      "title": "[newsletter] Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
+      "issue_repo": "audit-repos",
+      "issue": 23,
+      "security": false
     }
   ],
   "log": [
@@ -800,6 +802,36 @@
       "pr": "https://github.com/menckley/newsletter/pull/4",
       "issue": "https://github.com/menckley/audit-securite/issues/4",
       "security": true,
+      "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:39:46+00:00",
+      "reported": false,
+      "title": "[pricer] Backtester les prix offerts contre le réalisé pour calibrer risque, déviation et marge",
+      "pr": "https://github.com/menckley/pricer/pull/14",
+      "issue": "https://github.com/menckley/audit-repos/issues/2",
+      "security": false,
+      "repo": "pricer"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:40:00+00:00",
+      "reported": false,
+      "title": "[pricer] Distinguer pricings de test et pricings réels, avec statut du deal (gagné/perdu)",
+      "pr": "https://github.com/menckley/pricer/pull/15",
+      "issue": "https://github.com/menckley/audit-repos/issues/4",
+      "security": false,
+      "repo": "pricer"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T16:40:08+00:00",
+      "reported": false,
+      "title": "[newsletter] Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
+      "pr": "https://github.com/menckley/newsletter/pull/9",
+      "issue": "https://github.com/menckley/audit-repos/issues/23",
+      "security": false,
       "repo": "newsletter"
     }
   ],
