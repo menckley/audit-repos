@@ -41,6 +41,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "pricer",
+      "number": 11,
+      "url": "https://github.com/menckley/pricer/pull/11",
+      "branch": "agent/dependances-power-hpfc-non-declaree",
+      "title": "[pricer] Dépendances sans borne haute ni verrouillage ; power-hpfc hors pyproject",
+      "issue_repo": "audit-repos",
+      "issue": 3,
+      "security": false,
+      "opened": "2026-11-18T08:35:01+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
