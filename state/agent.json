@@ -97,6 +97,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "pricer",
+      "number": 12,
+      "url": "https://github.com/menckley/pricer/pull/12",
+      "branch": "agent/pricings-de-test-dans-historique-git",
+      "title": "[pricer] CI : tester l'absence de régression sur la reproductibilité des fichiers de pricing archivés",
+      "issue_repo": "audit-repos",
+      "issue": 39,
+      "security": false,
+      "opened": "2026-11-18T09:22:26+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [
