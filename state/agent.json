@@ -13,6 +13,20 @@
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
+    },
+    {
+      "target": "menckleys-projects",
+      "number": 1,
+      "url": "https://github.com/menckley/menckleys-projects/pull/1",
+      "branch": "agent/ci-pull-requests",
+      "title": "[menckleys-projects] Ajouter une CI (tests sur les Pull Requests)",
+      "issue_repo": "audit-repos",
+      "issue": 60,
+      "security": false,
+      "opened": "2026-11-18T07:52:37+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
     }
   ],
   "watch": [],
