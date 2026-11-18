@@ -1,20 +1,6 @@
 {
   "pending": [
     {
-      "target": "pricer",
-      "number": 10,
-      "url": "https://github.com/menckley/pricer/pull/10",
-      "branch": "agent/journal-concurrence-et-commit-message",
-      "title": "Correctif de sécurité",
-      "issue_repo": "audit-securite",
-      "issue": 2,
-      "security": true,
-      "opened": "2026-11-18T07:56:02+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
       "target": "menckleys-projects",
       "number": 4,
       "url": "https://github.com/menckley/menckleys-projects/pull/4",
@@ -43,20 +29,6 @@
       "human": ""
     },
     {
-      "target": "pricer",
-      "number": 11,
-      "url": "https://github.com/menckley/pricer/pull/11",
-      "branch": "agent/dependances-power-hpfc-non-declaree",
-      "title": "[pricer] Dépendances sans borne haute ni verrouillage ; power-hpfc hors pyproject",
-      "issue_repo": "audit-repos",
-      "issue": 3,
-      "security": false,
-      "opened": "2026-11-18T08:35:01+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": ""
-    },
-    {
       "target": "menckleys-projects",
       "number": 5,
       "url": "https://github.com/menckley/menckleys-projects/pull/5",
@@ -80,6 +52,20 @@
       "issue": 16,
       "security": false,
       "opened": "2026-11-18T08:38:19+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": ""
+    },
+    {
+      "target": "newsletter",
+      "number": 6,
+      "url": "https://github.com/menckley/newsletter/pull/6",
+      "branch": "agent/dependances-non-epinglees",
+      "title": "[newsletter] requirements.txt sans versions : builds non reproductibles",
+      "issue_repo": "audit-repos",
+      "issue": 17,
+      "security": false,
+      "opened": "2026-11-18T09:17:17+00:00",
       "fix_attempted": false,
       "branch_updated": false,
       "human": ""
@@ -134,6 +120,16 @@
       "title": "Bump actions/setup-python from 5 to 7",
       "issue_repo": null,
       "issue": null,
+      "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "777e8073e318a3aa59625e79f98740a41467df9f",
+      "merged": "2026-11-18T09:16:15+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/11",
+      "title": "[pricer] Dépendances sans borne haute ni verrouillage ; power-hpfc hors pyproject",
+      "issue_repo": "audit-repos",
+      "issue": 3,
       "security": false
     }
   ],
@@ -192,6 +188,26 @@
       "title": "Bump actions/setup-python from 5 to 7",
       "pr": "https://github.com/menckley/newsletter/pull/2",
       "repo": "newsletter"
+    },
+    {
+      "type": "review",
+      "at": "2026-11-18T09:16:07+00:00",
+      "reported": false,
+      "title": "Correctif de sécurité",
+      "pr": "https://github.com/menckley/pricer/pull/10",
+      "issue": "https://github.com/menckley/audit-securite/issues/2",
+      "security": true,
+      "detail": "Voir l'issue privée."
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-18T09:16:15+00:00",
+      "reported": false,
+      "title": "[pricer] Dépendances sans borne haute ni verrouillage ; power-hpfc hors pyproject",
+      "pr": "https://github.com/menckley/pricer/pull/11",
+      "issue": "https://github.com/menckley/audit-repos/issues/3",
+      "security": false,
+      "repo": "pricer"
     }
   ],
   "last_bilan": null,
