@@ -722,7 +722,7 @@
     {
       "type": "revert_failed",
       "at": "2026-11-18T16:22:14+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Ajouter une CI sur push/PR (pytest + ruff) et épingler les actions",
       "pr": "https://github.com/menckley/power-hpfc/pull/1",
       "repo": "power-hpfc",
@@ -732,7 +732,7 @@
     {
       "type": "reverted",
       "at": "2026-11-18T16:22:23+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/power-hpfc/pull/2",
       "repo": "power-hpfc",
@@ -742,7 +742,7 @@
     {
       "type": "reverted",
       "at": "2026-11-18T16:22:34+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/power-hpfc/pull/4",
       "repo": "power-hpfc",
@@ -752,7 +752,7 @@
     {
       "type": "reverted",
       "at": "2026-11-18T16:23:04+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Documenter l'exploitation : reprise, rotation des secrets, contribution",
       "pr": "https://github.com/menckley/power-hpfc/pull/7",
       "repo": "power-hpfc",
@@ -762,7 +762,7 @@
     {
       "type": "reverted",
       "at": "2026-11-18T16:23:18+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/checkout from 4.2.2 to 7.0.1",
       "pr": "https://github.com/menckley/power-hpfc/pull/3",
       "repo": "power-hpfc",
@@ -772,7 +772,7 @@
     {
       "type": "reverted",
       "at": "2026-11-18T16:23:30+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Bump actions/setup-python from 5.6.0 to 7.1.0",
       "pr": "https://github.com/menckley/power-hpfc/pull/8",
       "repo": "power-hpfc",
@@ -782,7 +782,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:24:53+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/pricer/pull/10",
       "issue": "https://github.com/menckley/audit-securite/issues/2",
@@ -792,7 +792,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:25:02+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Correctif de sécurité",
       "pr": "https://github.com/menckley/newsletter/pull/4",
       "issue": "https://github.com/menckley/audit-securite/issues/4",
@@ -802,7 +802,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:39:46+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[pricer] Backtester les prix offerts contre le réalisé pour calibrer risque, déviation et marge",
       "pr": "https://github.com/menckley/pricer/pull/14",
       "issue": "https://github.com/menckley/audit-repos/issues/2",
@@ -812,7 +812,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:40:00+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[pricer] Distinguer pricings de test et pricings réels, avec statut du deal (gagné/perdu)",
       "pr": "https://github.com/menckley/pricer/pull/15",
       "issue": "https://github.com/menckley/audit-repos/issues/4",
@@ -822,7 +822,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:40:08+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Remplacer le classement par mots-clés par un classement hybride (embeddings / clustering) avec vérification",
       "pr": "https://github.com/menckley/newsletter/pull/9",
       "issue": "https://github.com/menckley/audit-repos/issues/23",
@@ -832,7 +832,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:49:01+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[settlements-eex] Alertes de mouvement et analyses de courbe (spreads, structure, saisonnalité) à partir de l'historique",
       "pr": "https://github.com/menckley/settlements-eex/pull/8",
       "issue": "https://github.com/menckley/audit-repos/issues/52",
@@ -842,7 +842,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:52:44+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[menckleys-projects] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/menckleys-projects/pull/6",
       "repo": "menckleys-projects",
@@ -851,7 +851,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:52:48+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[newsletter] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/newsletter/pull/10",
       "repo": "newsletter",
@@ -860,7 +860,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:52:53+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[power-hpfc] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/power-hpfc/pull/15",
       "repo": "power-hpfc",
@@ -869,7 +869,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:52:57+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[pricer] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/pricer/pull/16",
       "repo": "pricer",
@@ -878,7 +878,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:53:02+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[projet-ttf-geopolitique] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/projet-ttf-geopolitique/pull/4",
       "repo": "projet-ttf-geopolitique",
@@ -887,7 +887,7 @@
     {
       "type": "merged",
       "at": "2026-11-18T16:53:06+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[settlements-eex] Alerte du Réparateur installée",
       "pr": "https://github.com/menckley/settlements-eex/pull/9",
       "repo": "settlements-eex",
@@ -896,14 +896,14 @@
     {
       "type": "merged",
       "at": "2026-11-18T17:14:07+00:00",
-      "reported": false,
+      "reported": true,
       "title": "[menckleys-projects] Fichiers générés retirés du suivi git",
       "pr": "https://github.com/menckley/menckleys-projects/pull/7",
       "repo": "menckleys-projects",
       "security": false
     }
   ],
-  "last_bilan": "2026-11-18T15:39:18+00:00",
+  "last_bilan": "2026-11-19T07:30:45+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9"
