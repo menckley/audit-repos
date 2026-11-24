@@ -1,6 +1,17 @@
 {
   "pending": [],
-  "watch": [],
+  "watch": [
+    {
+      "target": "pricer",
+      "sha": "b10d4a05a9727259f4ffddfd7fa2ec55deaf1929",
+      "merged": "2026-11-24T06:06:10+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/17",
+      "title": "Update pip-audit requirement from >=2.7 to >=2.10.1",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
+    }
+  ],
   "log": [
     {
       "type": "clarify",
@@ -570,11 +581,37 @@
       "pr": "https://github.com/menckley/menckleys-projects/pull/7",
       "repo": "menckleys-projects",
       "security": false
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-24T06:06:10+00:00",
+      "reported": true,
+      "title": "Update pip-audit requirement from >=2.7 to >=2.10.1",
+      "pr": "https://github.com/menckley/pricer/pull/17",
+      "repo": "pricer"
+    },
+    {
+      "type": "dependabot_major",
+      "at": "2026-11-24T06:06:10+00:00",
+      "reported": true,
+      "title": "Update numpy requirement from <3,>=1.26 to >=2.4.6,<3",
+      "pr": "https://github.com/menckley/pricer/pull/18",
+      "repo": "pricer"
+    },
+    {
+      "type": "dependabot_major",
+      "at": "2026-11-24T06:06:10+00:00",
+      "reported": true,
+      "title": "Update pyyaml requirement from <7,>=6.0.3 to >=6.0.4,<7",
+      "pr": "https://github.com/menckley/pricer/pull/19",
+      "repo": "pricer"
     }
   ],
-  "last_bilan": "2026-11-19T07:30:45+00:00",
+  "last_bilan": "2026-11-24T06:06:33+00:00",
   "seen": [
     "major:settlements-eex#4",
-    "major:power-hpfc#9"
+    "major:power-hpfc#9",
+    "major:pricer#18",
+    "major:pricer#19"
   ]
 }
