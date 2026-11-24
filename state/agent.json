@@ -10,6 +10,16 @@
       "issue_repo": null,
       "issue": null,
       "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "d273aea26166da44fec67166615f91f3a4488d06",
+      "merged": "2026-11-24T17:50:37+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/20",
+      "title": "Update ipywidgets requirement from >=8.1 to >=8.1.9",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -604,6 +614,14 @@
       "reported": true,
       "title": "Update pyyaml requirement from <7,>=6.0.3 to >=6.0.4,<7",
       "pr": "https://github.com/menckley/pricer/pull/19",
+      "repo": "pricer"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-24T17:50:37+00:00",
+      "reported": false,
+      "title": "Update ipywidgets requirement from >=8.1 to >=8.1.9",
+      "pr": "https://github.com/menckley/pricer/pull/20",
       "repo": "pricer"
     }
   ],
