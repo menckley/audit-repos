@@ -876,6 +876,60 @@ def test_retry_after_max_turns():
     print("OK 29 arrêt sur la limite de tours : seconde tentative automatique avec deux fois plus de marge")
 
 
+def test_relaunch_after_incident():
+    import importlib
+    import implement as imp
+    imp = importlib.reload(imp)
+    calls, comments = [], []
+
+    class G:
+        def __init__(self, refuse=False):
+            self.refuse = refuse
+
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def write(self, method, path, data=None):
+            if self.refuse:
+                raise common.GitHubError(403, "Resource not accessible")
+            calls.append((method, path, data))
+            return {}
+
+        def comment(self, repo, n, body):
+            comments.append(body)
+
+    entry = {"target": "power-hpfc", "issue_repo": "power-hpfc", "issue": 24,
+             "relaunch": [{"id": 3, "name": "HPFC quotidienne"}, {"id": 4, "name": "Fraîcheur de l'archive"}]}
+    imp.relaunch_repaired(G(), entry)
+    assert [c[1] for c in calls] == ["/repos/menckley/power-hpfc/actions/workflows/3/dispatches",
+                                     "/repos/menckley/power-hpfc/actions/workflows/4/dispatches"]
+    assert "HPFC quotidienne" in comments[-1] and "Réparateur reprendra" in comments[-1]
+    imp.relaunch_repaired(G(refuse=True), entry)
+    assert "Actions en lecture et écriture" in comments[-1], "permission manquante : expliqué"
+    print("OK 30 après correction d'un incident : workflows en panne relancés (ou explication)")
+
+    # PR réutilisée : sa description est remplacée par celle du nouveau travail
+    patches = []
+    imp.fresh_clone = lambda repo, dest: Path(tempfile.mkdtemp())
+    imp.git_identity = lambda d: None
+    imp.clean_generated = lambda d: False
+    imp.push = lambda *a, **k: None
+    imp.sh = lambda *a, **k: "1" if "--count" in a else ""
+    imp.run_claude = lambda prompt, cwd, tools, turns: "ok"
+
+    class Reuse(G):
+        def open_pr_for(self, *a):
+            return {"number": 25, "title": "ancien titre", "html_url": "https://pr/25"}
+
+        def write(self, method, path, data=None):
+            patches.append((method, path, data))
+            return {}
+
+    pr = imp.code_task(Reuse(), "power-hpfc", "agent/incident-24", {}, None, prompt_name="incident.md")
+    assert pr["number"] == 25 and patches and patches[0][0] == "PATCH" and patches[0][1].endswith("/pulls/25")
+    print("OK 31 PR réutilisée : description mise à jour avec le nouveau travail")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
@@ -888,4 +942,5 @@ if __name__ == "__main__":
     test_repairer_external()
     test_error_excerpt()
     test_retry_after_max_turns()
+    test_relaunch_after_incident()
     print("\nTous les tests passent.")

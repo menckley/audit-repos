@@ -312,8 +312,13 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
     footer_lines.append("🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement "
                         "si la CI est verte.")
     full_body = (body or "_(pas de description)_") + "\n" + "\n".join(footer_lines)
-    return gh.open_pr_for(target, branch) or gh.create_pr(
-        target, branch, base, title or f"Tâche d'audit {branch}", full_body)
+    existing = gh.open_pr_for(target, branch)
+    if existing:
+        # Nouvelle tentative sur la même branche : la description doit refléter ce travail-ci.
+        gh.write("PATCH", f"/repos/{OWNER}/{target}/pulls/{existing['number']}",
+                 {"title": (title or existing["title"])[:250], "body": full_body})
+        return existing
+    return gh.create_pr(target, branch, base, title or f"Tâche d'audit {branch}", full_body)
 
 
 def fix_ci(gh: GitHub, entry: dict, failed: list[dict], pr_title: str) -> bool:
@@ -519,6 +524,17 @@ def incident_queue(gh: GitHub, repos: list[str]) -> list[tuple[str, dict]]:
     return found
 
 
+def failing_workflows(gh: GitHub, repo: str) -> list[dict]:
+    """Derniers runs en échec de chaque workflow de la branche principale."""
+    base = gh.repo(repo)["default_branch"]
+    latest: dict[int, dict] = {}
+    for run in gh.workflow_runs(repo, branch=base):
+        if run["event"] != "pull_request" and run["status"] == "completed" \
+                and run["conclusion"] != "cancelled":
+            latest.setdefault(run["workflow_id"], run)
+    return [run for run in latest.values() if run["conclusion"] in BAD_CONCLUSIONS]
+
+
 def main_failures(gh: GitHub, repo: str) -> str:
     """Échecs actuels des workflows de la branche principale (dernier run de chacun)."""
     base = gh.repo(repo)["default_branch"]
@@ -544,6 +560,8 @@ def start_incident(gh: GitHub, state: dict, repo: str, issue: dict) -> None:
         c["body"] for c in gh.comments(repo, number) if c["user"]["login"] == BOT_LOGIN])
     values = {"OWNER": OWNER, "REPO": repo, "TITLE": issue["title"], "BODY": report,
               "NOTES": owner_comments(gh, repo, number), "FAILURES": main_failures(gh, repo)}
+    # Les workflows en panne seront relancés une fois la correction mergée.
+    broken = [{"id": r["workflow_id"], "name": r["name"]} for r in failing_workflows(gh, repo)]
     try:
         pr = code_task(gh, repo, f"agent/incident-{number}", values, issue_url(repo, number),
                        prompt_name="incident.md")
@@ -567,7 +585,7 @@ def start_incident(gh: GitHub, state: dict, repo: str, issue: dict) -> None:
         "target": repo, "number": pr["number"], "url": pr["html_url"], "branch": f"agent/incident-{number}",
         "title": issue["title"], "issue_repo": repo, "issue": number, "security": False,
         "opened": iso(now()), "fix_attempted": False, "branch_updated": False, "human": "",
-        "kind": "incident"})
+        "kind": "incident", "relaunch": broken})
     gh.comment(repo, number, f"🔧 Correction proposée : {pr['html_url']}\n\n"
                "Elle sera mergée automatiquement dès que la CI sera verte.")
     relabel(gh, repo, number, ["en-cours"], ["pr-ouverte"])
@@ -659,12 +677,39 @@ def redo(gh: GitHub, state: dict, entry: dict) -> None:
     print(f"  🔁 à refaire (conflit) : {entry['url']}")
 
 
+def relaunch_repaired(gh: GitHub, entry: dict) -> None:
+    """Après la correction d'un incident, relance les workflows qui étaient en panne pour
+    vérifier la réparation et rattraper le travail du jour (ex. calcul quotidien)."""
+    workflows = entry.get("relaunch") or []
+    if not workflows:
+        return
+    target = entry["target"]
+    base = gh.repo(target)["default_branch"]
+    done, failed = [], []
+    for wf in workflows:
+        try:
+            gh.write("POST", f"/repos/{OWNER}/{target}/actions/workflows/{wf['id']}/dispatches", {"ref": base})
+            done.append(wf["name"])
+        except GitHubError as exc:
+            failed.append(f"{wf['name']} ({exc.status})")
+    lines = []
+    if done:
+        lines.append("🔁 Workflows relancés pour vérifier la réparation : " + ", ".join(f"« {n} »" for n in done)
+                     + ". Le Réparateur reprendra la main s'ils échouent encore.")
+    if failed:
+        lines.append("⚠️ Relance impossible pour : " + ", ".join(failed) + ". Vérifie que `GH_PAT` a la "
+                     "permission **Actions en lecture et écriture**.")
+    gh.comment(entry["issue_repo"], entry["issue"], "\n\n".join(lines))
+    print(f"  🔁 relancés : {done or '-'} ; impossibles : {failed or '-'}")
+
+
 def finish_merged(gh: GitHub, state: dict, entry: dict, sha: str | None) -> None:
     state["pending"].remove(entry)
     gh.delete_branch(entry["target"], entry["branch"])
     repo, number = entry["issue_repo"], entry["issue"]
     gh.comment(repo, number, f"✅ Mergée automatiquement (CI verte) : {entry['url']}")
     relabel(gh, repo, number, ["pr-ouverte"], ["mergé"])
+    relaunch_repaired(gh, entry)
     gh.close_issue(repo, number)
     state["watch"].append({"target": entry["target"], "sha": sha, "merged": iso(now()),
                            "pr": entry["url"], "title": entry["title"], "issue_repo": repo,
