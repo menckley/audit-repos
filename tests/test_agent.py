@@ -780,6 +780,27 @@ def test_repairer_external():
     print("OK 25 après un rétablissement, une panne est de nouveau diagnostiquée (journal compris)")
 
 
+def test_error_excerpt():
+    import repair
+    log = "\n".join([
+        "2026-11-25T21:33:01.1Z ##[group]Run python scripts/build_hpfc.py",
+        "2026-11-25T21:33:01.2Z python scripts/build_hpfc.py",
+        "2026-11-25T21:33:01.3Z ##[endgroup]",
+        "2026-11-25T21:33:05.0Z Téléchargement de la séance EEX du 2026-11-24…",
+        "2026-11-25T21:33:06.0Z Traceback (most recent call last):",
+        "2026-11-25T21:33:06.1Z   File \"scripts/build_hpfc.py\", line 42, in <module>",
+        "2026-11-25T21:33:06.2Z KeyError: 'settlement_price'",
+        "2026-11-25T21:33:06.3Z ##[error]Process completed with exit code 1.",
+        "2026-11-25T21:33:07.0Z Post job cleanup.",
+        "2026-11-25T21:33:07.1Z [command]/usr/bin/git config --local --unset-all core.sshCommand",
+        "2026-11-25T21:33:07.2Z Cleaning up orphan processes",
+    ])
+    out = repair.error_excerpt(log)
+    assert "KeyError: 'settlement_price'" in out and "Téléchargement de la séance EEX" in out
+    assert "Post job cleanup" not in out and "Cleaning up" not in out and "2026-11-25T" not in out
+    print("OK 26 extrait du journal : l'étape en échec et son erreur, sans le nettoyage final")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
@@ -790,4 +811,5 @@ if __name__ == "__main__":
     test_incident()
     test_relaunch_and_audit()
     test_repairer_external()
+    test_error_excerpt()
     print("\nTous les tests passent.")

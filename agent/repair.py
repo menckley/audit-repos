@@ -44,6 +44,20 @@ TIMESTAMP_RE = re.compile(r"^\d{4}-\d\d-\d\dT[\d:.]+Z ")
 INFRA_PREFIXES = ("agent/alerte", "agent/hygiene")  # installation de l'alerte, hygiène : jamais annulées
 
 
+def error_excerpt(raw: str, lines: int = 60) -> str:
+    """Partie utile d'un journal de job : la sortie de l'étape en échec jusqu'à son erreur
+    (« ##[error] »), sans le nettoyage final de GitHub qui suit."""
+    clean = [ANSI_RE.sub("", TIMESTAMP_RE.sub("", line)) for line in raw.splitlines()]
+    error = next((i for i, line in enumerate(clean) if line.startswith("##[error]")), None)
+    if error is None:  # pas de marqueur : on cherche une trace Python ou un message d'erreur
+        error = next((i for i in range(len(clean) - 1, -1, -1)
+                      if re.search(r"Traceback|Error|Exception|error:", clean[i])), len(clean) - 1)
+    start = max((i for i in range(error) if clean[i].startswith("##[group]Run ")), default=0)
+    start = max(start, error - lines)
+    section = [line for line in clean[start:error + 1] if not line.startswith(("##[group]", "##[endgroup]"))]
+    return "\n".join(section)[-4000:]
+
+
 class Repairer:
     def __init__(self, gh: GitHub, repo: str, repo_dir: Path):
         self.gh, self.repo, self.dir = gh, repo, repo_dir
@@ -148,9 +162,9 @@ class Repairer:
             raw = self.gh.text(f"{self.api}/actions/jobs/{job['id']}/logs")
         except Exception:  # noqa: BLE001 — l'extrait est un bonus, jamais bloquant
             return ""
-        clean = [ANSI_RE.sub("", TIMESTAMP_RE.sub("", line)) for line in raw.splitlines()]
-        tail = "\n".join(clean[-lines:])[-4000:]
-        return f"\n\n**Étape en échec :** {step}\n\n<details><summary>Fin du journal</summary>\n\n```\n{tail}\n```\n</details>"
+        excerpt = error_excerpt(raw, lines)
+        return (f"\n\n**Étape en échec :** {step}\n\n<details><summary>Journal de l'erreur</summary>\n\n"
+                f"```\n{excerpt}\n```\n</details>")
 
     def merges_since(self, good: str, bad: str) -> list[str]:
         """Commits arrivés sur la branche principale après `good`, jusqu'à `bad` inclus,
