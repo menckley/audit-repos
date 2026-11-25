@@ -285,12 +285,14 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
     report = work / f"{branch.replace('/', '-')}-pr.md"
     report.unlink(missing_ok=True)
     prompt = render(prompt_name, {**values, "PR_PATH": str(report), "BASE": base})
-    run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
+    final = run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
 
     title, body = read_report(report)
     commits = int(sh("git", "rev-list", "--count", f"origin/{base}..HEAD", cwd=repo_dir).strip())
     if commits == 0:
-        raise NoChange(body or title or "Claude n'a produit aucun commit, sans explication.")
+        # Sans rapport écrit, le dernier message de Claude explique en général pourquoi.
+        raise NoChange("\n\n".join(x for x in (title, body) if x) or truncate(final or "", 5000)
+                       or "Claude n'a produit aucun commit, sans explication.")
     clean_generated(repo_dir)
     push(repo_dir, target, branch, force=True)
 
