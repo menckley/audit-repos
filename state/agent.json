@@ -20,6 +20,26 @@
       "issue_repo": null,
       "issue": null,
       "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "57a421a914514a48a95a42306456280a235924c9",
+      "merged": "2026-11-25T02:32:42+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/16",
+      "title": "Bump ruff from 0.17.5 to 0.17.6",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
+    },
+    {
+      "target": "pricer",
+      "sha": "0722e451aec18dec373269f0a07940f11166518d",
+      "merged": "2026-11-25T02:32:47+00:00",
+      "pr": "https://github.com/menckley/pricer/pull/21",
+      "title": "Update ruff requirement from >=0.5 to >=0.17.6",
+      "issue_repo": null,
+      "issue": null,
+      "security": false
     }
   ],
   "log": [
@@ -619,17 +639,60 @@
     {
       "type": "dependabot_merged",
       "at": "2026-11-24T17:50:37+00:00",
-      "reported": false,
+      "reported": true,
       "title": "Update ipywidgets requirement from >=8.1 to >=8.1.9",
       "pr": "https://github.com/menckley/pricer/pull/20",
       "repo": "pricer"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-25T02:32:42+00:00",
+      "reported": true,
+      "title": "Bump ruff from 0.17.5 to 0.17.6",
+      "pr": "https://github.com/menckley/power-hpfc/pull/16",
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "dependabot_red",
+      "at": "2026-11-25T02:32:43+00:00",
+      "reported": true,
+      "title": "Bump certifi from 2026.10.23 to 2026.11.20",
+      "pr": "https://github.com/menckley/power-hpfc/pull/17",
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "dependabot_major",
+      "at": "2026-11-25T02:32:43+00:00",
+      "reported": true,
+      "title": "Bump python-dateutil from 2.9.0.post0 to 4.0.0",
+      "pr": "https://github.com/menckley/power-hpfc/pull/18",
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "dependabot_red",
+      "at": "2026-11-25T02:32:43+00:00",
+      "reported": true,
+      "title": "Bump soupsieve from 4.1.1 to 4.1.3",
+      "pr": "https://github.com/menckley/power-hpfc/pull/20",
+      "repo": "power-hpfc"
+    },
+    {
+      "type": "dependabot_merged",
+      "at": "2026-11-25T02:32:47+00:00",
+      "reported": true,
+      "title": "Update ruff requirement from >=0.5 to >=0.17.6",
+      "pr": "https://github.com/menckley/pricer/pull/21",
+      "repo": "pricer"
     }
   ],
-  "last_bilan": "2026-11-24T06:06:33+00:00",
+  "last_bilan": "2026-11-25T02:33:02+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9",
     "major:pricer#18",
-    "major:pricer#19"
+    "major:pricer#19",
+    "red:power-hpfc#17:6e3076a4101084c4cf4de046fe777a28ed1c0900",
+    "major:power-hpfc#18",
+    "red:power-hpfc#20:121506a60ab15e17d60d69796ed12d2111dec292"
   ]
 }
