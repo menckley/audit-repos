@@ -378,20 +378,24 @@ REPAIR_BACK = "[réparation-auto-retour]"
 BROKEN = {"failure", "timed_out", "startup_failure"}  # « cancelled » n'est pas un échec
 
 
-def first_failure(runs: list[dict]) -> dict | None:
-    """Pour un workflow : si son dernier run est en échec alors qu'il a déjà réussi, renvoie
-    le premier run en échec après le dernier succès. Son commit est le vrai coupable."""
+def failure_window(runs: list[dict]) -> tuple[dict | None, dict | None]:
+    """Pour un workflow dont le dernier run est en échec alors qu'il a déjà réussi : renvoie
+    (dernier run réussi, premier run en échec après lui). Sinon (None, None)."""
     done = sorted((r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"),
                   key=lambda r: r["created_at"])
     if not done or done[-1]["conclusion"] not in BROKEN:
-        return None
+        return None, None
     first = None
     for run in reversed(done):
         if run["conclusion"] == "success":
-            return first
+            return run, first
         if run["conclusion"] in BROKEN:
             first = run
-    return None  # jamais réussi : rien à attribuer
+    return None, None  # jamais réussi : rien à attribuer
+
+
+def first_failure(runs: list[dict]) -> dict | None:
+    return failure_window(runs)[1]
 
 
 # --------------------------------------------------------------------------- git

@@ -357,7 +357,17 @@ def test_repairer():
 
     git = []
     BAD = "b" * 40
-    repair.sh = lambda *a, **k: git.append(a) or (f"{BAD} p1 p2" if "rev-list" in a else "newsha\n")
+    window = {"range": BAD + "\n"}  # commits renvoyés par « git rev-list --first-parent good..bad »
+
+    def fake_git(*a, **k):
+        git.append(a)
+        if "--first-parent" in a:
+            return window["range"]
+        if "--parents" in a:
+            return f"{a[-1]} p1 p2"  # commits de merge
+        return "newsha\n"
+
+    repair.sh = fake_git
 
     def run(conclusion, sha, minutes, attempt=1, message="feat: x"):
         return {"id": minutes, "workflow_id": 7, "name": "HPFC quotidienne", "event": "schedule",
@@ -374,7 +384,8 @@ def test_repairer():
     g.runs = [run("success", "good", 60), run("failure", BAD, 30), run("failure", BAD, 5, 2)]
     g.pulls[BAD] = [{"number": 9, "title": "Bump python-dateutil", "merged_at": "x", "merge_commit_sha": BAD}]
     assert rp.handle(run("failure", BAD, 5, attempt=2)) == "annulé et relancé"
-    assert any(a[:2] == ("git", "revert") and BAD in a for a in git) and ("git", "revert", "--no-edit", "-m", "1", BAD) in git
+    assert ("git", "revert", "--no-commit", "-m", "1", BAD) in git
+    assert ("git", "rev-list", "--first-parent", f"good..{BAD}") in git
     assert ("POST", "/repos/menckley/power-hpfc/actions/workflows/7/dispatches") in g.calls
     assert len(g.created) == 1 and "#9" in g.issues_list[0]["body"] and "@menckley" in g.issues_list[0]["body"]
     # le workflow relancé repasse au vert → « réparé », issue fermée
@@ -385,6 +396,24 @@ def test_repairer():
     # coupable déjà traité : on n'annule pas deux fois
     g.commits = [{"sha": "rev", "commit": {"message": msg}}]
     assert rp.handle(run("failure", BAD, 5, attempt=2)) == "coupable déjà traité"
+    # 25/11 : 4 merges en une minute, les runs intermédiaires annulés → tous annulés ensemble
+    g4 = G(); rp4 = repair.Repairer(g4, "power-hpfc", Path("."))
+    m1, m2, m3, m4 = ("1" * 40, "2" * 40, "3" * 40, "4" * 40)  # m1 = python-dateutil (le vrai fautif)
+    g4.runs = [run("success", "good", 60), run("cancelled", m1, 50), run("cancelled", m2, 49),
+               run("cancelled", m3, 48), run("failure", m4, 47), run("failure", m4, 5, 2)]
+    for i, sha in enumerate((m1, m2, m3, m4), start=18):
+        g4.pulls[sha] = [{"number": i, "title": f"Bump paquet {i}", "merged_at": "x", "merge_commit_sha": sha}]
+    window["range"] = f"{m4}\n{m3}\n{m2}\n{m1}\n"
+    git.clear()
+    assert rp4.handle(run("failure", m4, 5, attempt=2)) == "annulé et relancé"
+    reverted = [a[-1] for a in git if a[:3] == ("git", "revert", "--no-commit")]
+    assert reverted == [m4, m3, m2, m1], reverted
+    assert sum(1 for a in git if a[:2] == ("git", "commit")) == 1, "un seul commit d'annulation"
+    body = g4.issues_list[0]["body"]
+    assert "4 merges rapprochés" in body and "#18 Bump paquet 18" in body and "un par un" in body
+    window["range"] = BAD + "\n"
+    print("OK 14b merges rapprochés : tous annulés ensemble, en un seul commit")
+
     # commit poussé directement (sans PR) : alerte seulement
     g2 = G(); rp2 = repair.Repairer(g2, "power-hpfc", Path("."))
     g2.runs = [run("success", "good", 60), run("failure", "direct", 30)]

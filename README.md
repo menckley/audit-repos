@@ -10,7 +10,7 @@ Agent d'audit et de maintenance de mes repos GitHub publics, propulsé par Claud
 
 Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développeur les traite.
 
-- **🚑 Le Réparateur** (workflow réutilisable `reparateur.yml`) : appelé par le fichier `.github/workflows/alerte.yml` que le Développeur installe et tient à jour dans chaque repo. Dès qu'un workflow échoue sur la branche principale, il le relance. Si l'échec persiste, il annule le merge de PR qui l'a provoqué, relance le workflow et me prévient par une issue (donc un e-mail). Si l'annulation ne suffit pas, il rétablit le changement et m'alerte. Il n'annule jamais un commit poussé directement, ni deux fois le même.
+- **🚑 Le Réparateur** (workflow réutilisable `reparateur.yml`) : appelé par le fichier `.github/workflows/alerte.yml` que le Développeur installe et tient à jour dans chaque repo. Dès qu'un workflow échoue sur la branche principale, il le relance. Si l'échec persiste, il annule les merges de PR arrivés depuis le dernier run réussi (un seul en général, plusieurs si des merges rapprochés ont empêché les runs intermédiaires), relance le workflow et me prévient par une issue (donc un e-mail). Si l'annulation ne suffit pas, il rétablit le changement et m'alerte. Il n'annule jamais un commit poussé directement, ni deux fois le même.
 
 ## Fonctionnement
 

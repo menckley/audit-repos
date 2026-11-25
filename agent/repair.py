@@ -2,9 +2,11 @@
 se termine sur la branche principale.
 
 1. Échec au premier essai          → relance du workflow tel quel (souvent une panne externe).
-2. Échec au second essai           → recherche du commit coupable (premier run en échec
-                                     après le dernier succès). Si c'est le merge d'une PR,
-                                     il est annulé, puis le workflow est relancé.
+2. Échec au second essai           → recherche des coupables : tous les merges de PR
+                                     arrivés entre le dernier run réussi et le premier run
+                                     en échec (plusieurs si des merges rapprochés ont fait
+                                     annuler les runs intermédiaires). Ils sont annulés
+                                     ensemble, puis le workflow est relancé.
 3. Succès après une annulation     → « réparé ».
 4. Échec après une annulation      → le code n'était pas en cause : le changement est
                                      rétabli et le propriétaire alerté.
@@ -22,7 +24,8 @@ import os
 import re
 from pathlib import Path
 
-from common import BROKEN, OWNER, REPAIR_BACK, REPAIR_MARK, GitHub, GitHubError, first_failure, sh
+from common import (BROKEN, OWNER, REPAIR_BACK, REPAIR_MARK, GitHub, GitHubError,
+                    failure_window, sh)
 
 MARK = REPAIR_MARK
 BACK = REPAIR_BACK
@@ -89,16 +92,31 @@ class Repairer:
             return None
         return next((p for p in pulls if p.get("merged_at") and p.get("merge_commit_sha") == sha), None)
 
-    def revert(self, sha: str, message: str, base: str) -> str:
+    def merges_since(self, good: str, bad: str) -> list[str]:
+        """Commits arrivés sur la branche principale après `good`, jusqu'à `bad` inclus,
+        du plus récent au plus ancien."""
+        try:
+            out = sh("git", "rev-list", "--first-parent", f"{good}..{bad}", cwd=self.dir)
+        except RuntimeError:
+            return [bad]
+        return out.split() or [bad]
+
+    def revert(self, shas: list[str], message: str, base: str) -> str:
+        """Annule les commits donnés (du plus récent au plus ancien) en un seul commit."""
         sh("git", "config", "user.name", "github-actions[bot]", cwd=self.dir)
         sh("git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com",
            cwd=self.dir)
         sh("git", "fetch", "-q", "origin", base, cwd=self.dir)
         sh("git", "checkout", "-q", "-B", base, f"origin/{base}", cwd=self.dir)
-        parents = sh("git", "rev-list", "--parents", "-n", "1", sha, cwd=self.dir).split()
-        mainline = ["-m", "1"] if len(parents) > 2 else []
-        sh("git", "revert", "--no-edit", *mainline, sha, cwd=self.dir)
-        sh("git", "commit", "-q", "--amend", "-m", message, cwd=self.dir)
+        for sha in shas:
+            parents = sh("git", "rev-list", "--parents", "-n", "1", sha, cwd=self.dir).split()
+            mainline = ["-m", "1"] if len(parents) > 2 else []
+            try:
+                sh("git", "revert", "--no-commit", *mainline, sha, cwd=self.dir)
+            except RuntimeError:
+                sh("git", "revert", "--abort", cwd=self.dir, check=False)
+                raise
+        sh("git", "commit", "-q", "-m", message, cwd=self.dir)
         sh("git", "push", "-q", "origin", f"HEAD:{base}", cwd=self.dir)
         return sh("git", "rev-parse", "HEAD", cwd=self.dir).strip()
 
@@ -130,7 +148,7 @@ class Repairer:
             repair = self.repair_commit(key)
             if not repair:
                 return "annulation introuvable"
-            self.revert(repair, f"revert: rétablir {key[:7]} (l'annulation n'a pas aidé) "
+            self.revert([repair], f"revert: rétablir {key[:7]} (l'annulation n'a pas aidé) "
                         f"{BACK} {MARK} {key}", base)
             self.follow_up(key, "⚠️ L'annulation **n'a pas suffi** : « " + name + "» échoue toujours "
                         f"([run]({run['html_url']})). Le changement a donc été **rétabli** : le problème "
@@ -143,33 +161,44 @@ class Repairer:
 
         runs = [r for r in self.gh.get(f"{self.api}/actions/workflows/{wf_id}/runs", branch=base,
                                        per_page=100)["workflow_runs"] if r["event"] != "pull_request"]
-        bad = first_failure(runs)
+        good, bad = failure_window(runs)
         key = bad["head_sha"] if bad else f"{wf_id}-{run['head_sha']}"
         title = f"🚑 « {name} » en échec sur {self.repo}"
         if not bad:
             self.notify(key, title, f"« {name} » échoue ([run]({run['html_url']})) et n'a jamais "
                         "réussi : je ne peux pas désigner de coupable. **À regarder.**")
             return "alerte : jamais réussi"
-        culprit = bad["head_sha"]
-        if self.already_tried(culprit):
+        if self.already_tried(key):
             return "coupable déjà traité"
-        pr = self.merged_pr(culprit)
-        if not pr:
-            self.notify(key, title, f"« {name} » échoue depuis le commit `{culprit[:7]}` "
+        suspects = [(sha, self.merged_pr(sha)) for sha in self.merges_since(good["head_sha"], key)]
+        merged = [(sha, pr) for sha, pr in suspects if pr]
+        direct = [sha for sha, pr in suspects if not pr]
+        if not merged:
+            self.notify(key, title, f"« {name} » échoue depuis le commit `{key[:7]}` "
                         f"([run]({bad['html_url']})), poussé directement sans PR : je ne l'annule pas. "
                         "**À regarder.**")
             return "alerte : commit direct"
 
-        self.revert(culprit, f"revert: {pr['title']} (#{pr['number']}) {MARK} {culprit}\n\n"
-                    f"« {name} » échoue depuis ce merge ({bad['html_url']}). Annulation automatique "
-                    "par le Réparateur.", base)
+        listing = "\n".join(f"- #{pr['number']} {pr['title']}" for _, pr in merged)
+        plural = len(merged) > 1
+        self.revert([sha for sha, _ in merged],
+                    f"revert: annuler {len(merged)} merge(s) depuis le dernier état vert {MARK} {key}\n\n"
+                    f"« {name} » échoue depuis ({bad['html_url']}). Annulation automatique par le "
+                    f"Réparateur :\n{listing}", base)
         relaunched = self.dispatch(wf_id, base)
-        self.notify(key, title, f"🔧 « {name} » échouait depuis le merge de **#{pr['number']} "
-                    f"{pr['title']}** ([run]({bad['html_url']})), même après une relance.\n\n"
-                    "- Ce merge a été **annulé** automatiquement.\n"
-                    + ("- Le workflow a été **relancé** : je te confirme ici s'il repasse au vert."
-                       if relaunched else "- Ce workflow ne peut pas être relancé à la main : "
-                       "la vérification aura lieu à son prochain passage."))
+        intro = (f"🔧 « {name} » échoue depuis l'arrivée de **{len(merged)} merges rapprochés** "
+                 "(les runs intermédiaires n'ont pas pu tourner, je ne sais pas lequel est en cause)"
+                 if plural else f"🔧 « {name} » échouait depuis le merge de **#{merged[0][1]['number']} "
+                 f"{merged[0][1]['title']}**")
+        self.notify(key, title, f"{intro} ([run]({bad['html_url']})), même après une relance.\n\n"
+                    f"{'Merges annulés' if plural else 'Merge annulé'} automatiquement :\n{listing}\n\n"
+                    + (f"Commits poussés directement, laissés en place : "
+                       f"{', '.join(f'`{s[:7]}`' for s in direct)}\n\n" if direct else "")
+                    + ("Le workflow a été **relancé** : je te confirme ici s'il repasse au vert."
+                       if relaunched else "Ce workflow ne peut pas être relancé à la main : la "
+                       "vérification aura lieu à son prochain passage.")
+                    + ("\n\nUne fois réparé, remets ces changements **un par un** pour trouver le "
+                       "fautif (Dependabot les reproposera de lui-même)." if plural else ""))
         return "annulé et relancé"
 
 
