@@ -54,6 +54,13 @@ jobs:
         with:
           node-version: "22"
 
+      # Environnement Python isolé : python, python3 et pip y installent librement les
+      # dépendances des projets (le Python du système refuse les installations).
+      - name: Environnement Python isolé
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
       - name: Installer Claude Code
         run: |
           npm install -g @anthropic-ai/claude-code

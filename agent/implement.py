@@ -37,6 +37,8 @@ CODE_TOOLS = READ_TOOLS + [
     "Bash(git mv:*)", "Bash(git rm:*)", "Bash(mkdir:*)", "Bash(git ls-remote:*)",
     "Bash(pip install:*)", "Bash(python -m pip install:*)", "Bash(python -m pytest:*)",
     "Bash(pytest:*)", "Bash(python:*)", "Bash(ruff:*)", "Bash(uv:*)",
+    "Bash(python3:*)", "Bash(pip3 install:*)", "Bash(python3 -m pip install:*)",
+    "Bash(python3 -m pytest:*)",
 ]
 STATE_PATH = ROOT / "state" / "agent.json"
 # Labels qui signifient « déjà pris en charge » ou « attend le propriétaire ».
@@ -680,6 +682,12 @@ def send_back(gh: GitHub, state: dict, entry: dict, reason: str) -> None:
     state["pending"].remove(entry)
     repo, number = entry["issue_repo"], entry["issue"]
     incident = entry.get("kind") == "incident"
+    if incident and once(state, f"incident-retry:{repo}#{number}"):
+        # Un incident n'attend pas : on le reprend une fois de zéro avant de solliciter le propriétaire.
+        gh.comment(repo, number, f"🔁 {reason} Je reprends l'incident de zéro (dernière tentative).")
+        relabel(gh, repo, number, ["pr-ouverte"], [INCIDENT_LABEL])
+        print(f"  🔁 incident repris de zéro : {repo}#{number}")
+        return
     gh.comment(repo, number, f"⚠️ Je ne merge pas automatiquement : {reason}\n\n"
                f"La PR reste ouverte : {entry['url']}. Tu peux la merger toi-même, ou "
                + ("commenter puis remettre le label `à-développer` pour que je recommence." if incident

@@ -666,7 +666,10 @@ def test_incident():
     # CI rouge deux fois : renvoyé sans cases à cocher (ce n'est pas une proposition)
     entry = st["pending"][-1]
     imp.send_back(gh, st, entry, "la CI reste rouge.")
-    assert "à-relire" in labels(issue) and "Lancer" not in issue["body"]
+    assert "à-développer" in labels(issue) and "à-relire" not in labels(issue), "1re fois : repris de zéro"
+    issue["labels"].append({"name": "pr-ouverte"}); st["pending"].append(entry)
+    imp.send_back(gh, st, entry, "la CI reste rouge.")
+    assert "à-relire" in labels(issue) and "Lancer" not in issue["body"], "2e fois : renvoyé au propriétaire"
     print("OK 20 Développeur : incident pris en charge, correction proposée en PR")
 
 

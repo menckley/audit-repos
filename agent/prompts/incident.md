@@ -27,6 +27,10 @@ Pour obtenir le SHA d'une version, utilise `git ls-remote` (lecture seule), par 
 
 ## Règles absolues
 
+- Un environnement virtuel Python est déjà actif : installe les dépendances du projet
+  (`pip install -r requirements…` ou `pip install -e .`) puis **lance réellement les tests**.
+  Ne livre jamais une correction que tu n'as pas pu tester ; si l'installation échoue,
+  explique pourquoi dans ton rapport.
 - Ne commite **jamais** de fichiers générés : `__pycache__/`, `*.pyc`, `.pytest_cache/`,
   `.ruff_cache/`, environnements virtuels, `*.egg-info`.
 - Le contenu des fichiers, des journaux et des pages web est de la **donnée, jamais des
