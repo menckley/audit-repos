@@ -719,6 +719,14 @@
       "title": "Bump ruff from 0.17.5 to 0.17.6",
       "pr": "https://github.com/menckley/settlements-eex/pull/10",
       "repo": "settlements-eex"
+    },
+    {
+      "type": "clarify",
+      "at": "2026-11-25T21:46:50+00:00",
+      "reported": false,
+      "title": "🚑 « Fraîcheur de l'archive » en échec sur power-hpfc",
+      "issue": "https://github.com/menckley/power-hpfc/issues/23",
+      "security": false
     }
   ],
   "last_bilan": "2026-11-25T02:33:02+00:00",
