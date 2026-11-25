@@ -8,11 +8,19 @@ on:
   # surveillance après merge, repo privé audit-securite, reprises après quota.
   schedule:
     - cron: "15 * * * *"
+  # Aussi lancé par lui-même tant qu'il reste du travail (les passages planifiés de GitHub
+  # ne sont pas fiables).
   workflow_dispatch:
+    inputs:
+      chain:
+        description: "Réservé : numéro de relance automatique (laisser vide)"
+        required: false
+        default: ""
 
 permissions:
   contents: write   # enregistrer l'état de l'agent dans state/
   issues: write     # publier le bilan (envoyé par e-mail par GitHub)
+  actions: write    # se relancer et lancer l'audit mensuel s'il n'a pas démarré
 
 concurrency:
   group: agent
@@ -57,4 +65,5 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_TOKEN: ${{ github.token }}
+          INPUT_CHAIN: ${{ inputs.chain }}
         run: python implement.py

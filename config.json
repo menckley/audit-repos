@@ -27,5 +27,8 @@
   "dependabot_automerge": true,
   "always_auto_categories": [
     "securite"
-  ]
+  ],
+  "relaunch_delay_minutes": 6,
+  "relaunch_max_chain": 30,
+  "audit_retry_hours": 3
 }

@@ -670,6 +670,31 @@ def test_incident():
     print("OK 20 Développeur : incident pris en charge, correction proposée en PR")
 
 
+def test_relaunch_and_audit():
+    import implement as imp
+    from datetime import datetime, timezone
+    imp.MORE_WORK.clear()
+    st = {"pending": [], "watch": [], "log": [], "seen": []}
+    assert not imp.should_relaunch(st, 0, True, 0), "rien en cours : pas de relance"
+    assert imp.should_relaunch(dict(st, pending=[{"x": 1}]), 0, True, 0), "PR en attente de CI"
+    assert imp.should_relaunch(st, 2, True, 0), "tâches pas encore démarrées"
+    imp.MORE_WORK.append("CI pricer#3")
+    assert imp.should_relaunch(st, 0, True, 0), "PR technique en attente"
+    assert not imp.should_relaunch(st, 0, False, 0), "quota épuisé : on attend"
+    assert not imp.should_relaunch(st, 0, True, imp.CONFIG["relaunch_max_chain"]), "jamais de boucle infinie"
+    imp.MORE_WORK.clear()
+    print("OK 21 relance automatique : seulement s'il reste du travail, plafonnée")
+
+    day1 = datetime(2026, 12, 1, 7, 0, tzinfo=timezone.utc)
+    assert imp.audit_due({}, day1, None), "1er du mois, audit pas démarré : on le lance"
+    assert not imp.audit_due({}, day1.replace(hour=5), None), "pas avant 6 h UTC"
+    recent = {"audit_dispatched": day1.isoformat()}
+    assert not imp.audit_due(recent, day1.replace(hour=8), None), "pas deux lancements rapprochés"
+    assert imp.audit_due(recent, day1.replace(hour=11), {"recap_issue": None}), "audit interrompu : relancé"
+    assert not imp.audit_due({}, day1, {"recap_issue": 59}), "audit terminé : rien à faire"
+    print("OK 22 audit mensuel : lancé ou relancé par le Développeur si GitHub l'oublie")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
@@ -678,4 +703,5 @@ if __name__ == "__main__":
     test_later()
     test_repairer_followups()
     test_incident()
+    test_relaunch_and_audit()
     print("\nTous les tests passent.")

@@ -37,6 +37,15 @@ Ils ne se parlent qu'à travers les issues : l'Auditeur les écrit, le Développ
                               🛠️ Bilan détaillé par e-mail
 ```
 
+## Fiabilité des déclenchements
+
+Les passages planifiés de GitHub sont irréguliers (parfois 2 par jour au lieu de 24). Donc :
+
+- le **Développeur se relance lui-même** quelques minutes après un passage tant qu'il reste du
+  travail en cours (PR en attente de CI, tâches en file), dans la limite de 30 relances d'affilée ;
+- à chaque passage, il **lance l'audit mensuel** s'il n'a pas démarré (à partir du 1er à 7 h,
+  heure de Paris) ou le **relance** s'il est resté inachevé.
+
 ## Ce que je reçois par e-mail
 
 - **📋 Récap d'audit** (début de mois) : ce qui sera traité automatiquement et ce qui

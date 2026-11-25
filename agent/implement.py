@@ -715,6 +715,7 @@ def dependabot(gh: GitHub, state: dict, repos: list[str], can_claude: bool = Tru
                                  {"body": f"{AGENT_MARK}\n🛠️ CI rouge : j'ai poussé une correction sur cette branche. "
                                           "Je la mergerai si la CI repasse au vert."})
                         print(f"  🔧 PR Dependabot corrigée : {pr['html_url']}")
+                        MORE_WORK.append(f"Dependabot {key}")
                         continue
                 if once(state, f"red:{key}:{pr['head']['sha']}"):
                     log(state, "dependabot_red", title=pr["title"], pr=pr["html_url"], repo=repo)
@@ -853,6 +854,8 @@ def advance_infra_pr(gh: GitHub, state: dict, repo: str, branch: str, label: str
     if not pr:
         return False
     status, _ = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
+    if status == "wait":
+        MORE_WORK.append(f"CI {repo}#{pr['number']}")
     full = pull_with_mergeable(gh, repo, pr["number"])
     if status == "success" and full.get("mergeable"):
         gh.merge_pr(repo, pr["number"], pr["title"])
@@ -893,6 +896,7 @@ def ensure_alerts(gh: GitHub, state: dict, repos: list[str]) -> None:
                      "puissent être relancés après une annulation.\n\n"
                      "🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement si la CI est verte.")
         print(f"  + PR d'alerte ouverte : {repo}")
+        MORE_WORK.append(f"alerte {repo}")
 
 
 HYGIENE_BRANCH = "agent/hygiene"
@@ -919,6 +923,7 @@ def ensure_hygiene(gh: GitHub, state: dict, repos: list[str]) -> None:
                      "`.gitignore` pour qu'ils ne reviennent pas.\n\n"
                      "🛠️ Préparée par le Développeur (Claude Code). Mergée automatiquement si la CI est verte.")
         print(f"  + PR d'hygiène ouverte : {repo}")
+        MORE_WORK.append(f"hygiène {repo}")
 
 
 def sweep_branches(gh: GitHub, repos: list[str]) -> None:
@@ -1058,12 +1063,65 @@ def maybe_bilan(gh: GitHub, bot: GitHub, state: dict, busy: bool) -> None:
 # --------------------------------------------------------------------------- main
 
 
+# --------------------------------------------------------------------------- relance et audit
+
+MORE_WORK: list[str] = []  # travail en cours détecté pendant ce passage (PR en attente de CI…)
+
+
+def should_relaunch(state: dict, remaining: int, can_claude: bool, chain: int) -> bool:
+    """Se relancer seul tant qu'il reste du travail, sans boucler indéfiniment."""
+    if not can_claude or chain >= CONFIG["relaunch_max_chain"]:
+        return False
+    return bool(state["pending"]) or remaining > 0 or bool(MORE_WORK)
+
+
+def relaunch(bot: GitHub, chain: int) -> None:
+    delay = CONFIG["relaunch_delay_minutes"]
+    print(f"\n↻ Travail en cours : relance dans {delay} min (relance n° {chain + 1}).")
+    time.sleep(delay * 60)
+    bot.write("POST", f"/repos/{OWNER}/{PUBLIC_REPO}/actions/workflows/implement.yml/dispatches",
+              {"ref": "main", "inputs": {"chain": str(chain + 1)}})
+
+
+def audit_due(state: dict, today: datetime, audit_state: dict | None) -> bool:
+    """Vrai si l'audit du mois aurait dû démarrer (ou reprendre) et que personne ne l'a lancé
+    récemment : les passages planifiés de GitHub ne sont pas fiables."""
+    if today.hour < 6:
+        return False
+    last = state.get("audit_dispatched")
+    if last and today - parse(last) < timedelta(hours=CONFIG["audit_retry_hours"]):
+        return False
+    if audit_state is None:
+        return True  # pas encore démarré ce mois-ci
+    return audit_state.get("recap_issue") is None  # démarré mais pas terminé
+
+
+def ensure_audit(bot: GitHub, state: dict) -> None:
+    today = now()
+    path = ROOT / "state" / f"{today:%Y-%m}.json"
+    audit_state = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    if not audit_due(state, today, audit_state):
+        return
+    runs = bot.get(f"/repos/{OWNER}/{PUBLIC_REPO}/actions/workflows/audit.yml/runs", per_page=5) or {}
+    if any(r["status"] in ("queued", "in_progress") for r in runs.get("workflow_runs", [])):
+        return
+    bot.write("POST", f"/repos/{OWNER}/{PUBLIC_REPO}/actions/workflows/audit.yml/dispatches", {"ref": "main"})
+    state["audit_dispatched"] = iso(today)
+    print(f"\n🔍 Audit {today:%Y-%m} {'démarré' if audit_state is None else 'relancé'} par le Développeur.")
+
+
 def main() -> None:
     gh = GitHub(os.environ["GH_PAT"])
     bot = GitHub(os.environ.get("GITHUB_TOKEN"))  # le bilan publié par le bot → e-mail
     state = load_state()
     can_claude = True
+    chain = int(os.environ.get("INPUT_CHAIN") or 0)
+    remaining = 0
     try:
+        try:
+            ensure_audit(bot, state)
+        except GitHubError as exc:
+            print(f"  ⚠️ vérification de l'audit impossible : {exc}")
         issues = {repo: gh.issues(repo, state="open", labels="audit")
                   for repo in (PUBLIC_REPO, SECURITY_REPO)}
         migrate_backlog(gh, issues)
@@ -1137,10 +1195,13 @@ def main() -> None:
         print("\n— Annulations faites par le Réparateur")
         watch(gh, state)
 
-        busy = bool(state["pending"]) or started < len(queue) + len(incidents)
+        remaining = len(queue) + len(incidents) - started
+        busy = bool(state["pending"]) or remaining > 0
         maybe_bilan(gh, bot, state, busy)
     finally:
         save_state(state)
+    if should_relaunch(state, remaining, can_claude, chain):
+        relaunch(bot, chain)
 
 
 if __name__ == "__main__":
