@@ -695,6 +695,81 @@ def test_relaunch_and_audit():
     print("OK 22 audit mensuel : lancé ou relancé par le Développeur si GitHub l'oublie")
 
 
+def test_repairer_external():
+    import repair
+
+    class G:
+        def __init__(self):
+            self.calls, self.issues_list, self.runs, self.pulls = [], [], [], {}
+
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def get(self, path, **p):
+            if path.endswith("/jobs"):
+                return {"jobs": [{"id": 7, "conclusion": "failure",
+                                  "steps": [{"name": "Construire la courbe EEX", "conclusion": "failure"}]}]}
+            if "/runs" in path:
+                return {"workflow_runs": self.runs}
+            if path.endswith("/commits"):
+                return []
+            if "/pulls" in path:
+                return self.pulls.get(path.split("/")[-2], [])
+
+        def text(self, path):
+            return "2026-11-25T15:12:40.1Z \x1b[31mErreur : l'API EEX a répondu 503\x1b[0m\n"
+
+        def write(self, method, path, data=None):
+            self.calls.append((method, path))
+            return {}
+
+        def issues(self, repo, state="open", labels=None):
+            return [i for i in self.issues_list if i["state"] == "open"]
+
+        def create_issue(self, repo, title, body, labels):
+            issue = {"number": len(self.issues_list) + 1, "body": body, "state": "open", "labels": []}
+            self.issues_list.append(issue)
+            return issue
+
+        def add_labels(self, repo, n, labels):
+            self.issues_list[n - 1]["labels"] += [{"name": l} for l in labels]
+
+    git = []
+    repair.sh = lambda *a, **k: git.append(a) or ""
+    SAME = "7255723" + "0" * 33
+
+    def run(conclusion, minutes, attempt=1, sha=SAME):
+        return {"id": minutes, "workflow_id": 3, "name": "HPFC quotidienne", "event": "schedule",
+                "status": "completed", "conclusion": conclusion, "head_sha": sha, "head_branch": "main",
+                "run_attempt": attempt, "created_at": ago(minutes=minutes), "html_url": f"https://run/{minutes}",
+                "head_commit": {"message": "ci: alerte du Réparateur (#15)"}}
+
+    # 24/11 : la collecte échoue sur le même code que lors de son dernier succès
+    g = G(); rp = repair.Repairer(g, "power-hpfc", Path("."))
+    g.runs = [run("success", 1500), run("failure", 60, 2)]
+    g.pulls[SAME] = [{"number": 15, "title": "ci: alerte", "merged_at": "x", "merge_commit_sha": SAME,
+                      "head": {"ref": "agent/alerte-reparateur"}}]
+    assert rp.handle(run("failure", 60, attempt=2)) == "alerte : cause externe"
+    assert not any(a[:2] == ("git", "revert") for a in git), "rien n'est annulé"
+    body = g.issues_list[0]["body"]
+    assert "pas changé" in body and "l'API EEX a répondu 503" in body and "\x1b" not in body
+    assert "Construire la courbe EEX" in body and {"name": "à-développer"} in g.issues_list[0]["labels"]
+    assert rp.handle(run("failure", 30, attempt=2)) == "cause externe déjà signalée", "une seule alerte"
+    print("OK 23 code inchangé : cause externe signalée avec le journal, rien d'annulé")
+
+    # l'installation de l'alerte n'est jamais désignée coupable
+    g2 = G(); rp2 = repair.Repairer(g2, "power-hpfc", Path("."))
+    NEW = "a" * 40
+    g2.runs = [run("success", 1500, sha="b" * 40), run("failure", 60, 2, sha=NEW)]
+    g2.pulls[NEW] = [{"number": 15, "title": "ci: alerte", "merged_at": "x", "merge_commit_sha": NEW,
+                      "head": {"ref": "agent/alerte-reparateur"}}]
+    repair.sh = lambda *a, **k: git.append(a) or (NEW if "--first-parent" in a else "")
+    git.clear()
+    assert rp2.handle(run("failure", 60, attempt=2, sha=NEW)) == "alerte : commit direct"
+    assert not any(a[:2] == ("git", "revert") for a in git)
+    print("OK 24 l'installation de l'alerte et l'hygiène ne sont jamais annulées")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
@@ -704,4 +779,5 @@ if __name__ == "__main__":
     test_repairer_followups()
     test_incident()
     test_relaunch_and_audit()
+    test_repairer_external()
     print("\nTous les tests passent.")

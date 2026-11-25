@@ -185,6 +185,26 @@ class GitHub:
     def get(self, path, **params):
         return self._call("GET", path, params=params or None)
 
+    def text(self, path: str) -> str:
+        """Texte brut servi par redirection (ex. journal d'un job) : on suit la redirection
+        sans renvoyer le jeton au serveur de stockage."""
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, *args, **kwargs):
+                return None
+        headers = {"Accept": "application/vnd.github+json", "User-Agent": "audit-repos-agent"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        req = urllib.request.Request(API + path, headers=headers)
+        try:
+            with urllib.request.build_opener(NoRedirect).open(req, timeout=60) as resp:
+                return resp.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as exc:
+            location = exc.headers.get("Location") if exc.code in (301, 302, 303, 307, 308) else None
+            if not location:
+                raise GitHubError(exc.code, f"GET {path} → {exc.code}") from None
+        with urllib.request.urlopen(location, timeout=60) as resp:
+            return resp.read().decode("utf-8", "replace")
+
     def write(self, method: str, path: str, data=None):
         if DRY_RUN:
             print(f"[dry-run] {method} {path} {json.dumps(data, ensure_ascii=False)[:300]}")

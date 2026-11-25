@@ -39,6 +39,9 @@ SHA_RE = re.compile(re.escape(MARK) + r" ([0-9a-f]{40})")
 REVERTED_RE = re.compile(r"^annulés: ([0-9a-f ]+)$", re.M)
 WORKFLOW_RE = re.compile(r"^workflow: (\d+)$", re.M)
 ESCALATE = "à-développer"
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+TIMESTAMP_RE = re.compile(r"^\d{4}-\d\d-\d\dT[\d:.]+Z ")
+INFRA_PREFIXES = ("agent/alerte", "agent/hygiene")  # installation de l'alerte, hygiène : jamais annulées
 
 
 class Repairer:
@@ -134,14 +137,31 @@ class Repairer:
             return False
         return MARK in log
 
+    def log_excerpt(self, run: dict, lines: int = 60) -> str:
+        """Fin du journal du premier job en échec (visible par le propriétaire et le Développeur)."""
+        try:
+            jobs = self.gh.get(f"{self.api}/actions/runs/{run['id']}/jobs") or {}
+            job = next((j for j in jobs.get("jobs", []) if j.get("conclusion") in BROKEN), None)
+            if not job:
+                return ""
+            step = next((s["name"] for s in job.get("steps", []) if s.get("conclusion") in BROKEN), "?")
+            raw = self.gh.text(f"{self.api}/actions/jobs/{job['id']}/logs")
+        except Exception:  # noqa: BLE001 — l'extrait est un bonus, jamais bloquant
+            return ""
+        clean = [ANSI_RE.sub("", TIMESTAMP_RE.sub("", line)) for line in raw.splitlines()]
+        tail = "\n".join(clean[-lines:])[-4000:]
+        return f"\n\n**Étape en échec :** {step}\n\n<details><summary>Fin du journal</summary>\n\n```\n{tail}\n```\n</details>"
+
     def merges_since(self, good: str, bad: str) -> list[str]:
         """Commits arrivés sur la branche principale après `good`, jusqu'à `bad` inclus,
         du plus récent au plus ancien."""
+        if good == bad:
+            return []
         try:
             out = sh("git", "rev-list", "--first-parent", f"{good}..{bad}", cwd=self.dir)
         except RuntimeError:
-            return [bad]
-        return out.split() or [bad]
+            return []
+        return out.split()
 
     def revert(self, shas: list[str], message: str, base: str) -> str:
         """Annule les commits donnés (du plus récent au plus ancien) en un seul commit."""
@@ -231,9 +251,20 @@ class Repairer:
         title = f"🚑 « {name} » en échec sur {self.repo}"
         if not bad:
             self.notify(key, title, f"« {name} » échoue ([run]({run['html_url']})) et n'a jamais "
-                        "réussi : je ne peux pas désigner de coupable.")
+                        "réussi : je ne peux pas désigner de coupable." + self.log_excerpt(run))
             self.escalate(key, "je ne peux pas désigner de coupable.")
             return "alerte : jamais réussi"
+        if good["head_sha"] == bad["head_sha"]:
+            # Même code que lors du dernier succès : rien à annuler, la cause est extérieure.
+            if self.incident(key):
+                return "cause externe déjà signalée"
+            self.notify(key, title, f"⚠️ « {name} » échoue ([run]({run['html_url']})) alors que le code n'a "
+                        f"**pas changé** depuis son dernier succès ([run]({good['html_url']})). La cause "
+                        "vient de l'extérieur (service ou API indisponible, données absentes, secret "
+                        "expiré…) : je n'annule rien." + self.log_excerpt(run))
+            self.escalate(key, "la panne ne vient pas d'un changement de code : il faut l'analyser, "
+                               "et rendre le code robuste si c'est possible.")
+            return "alerte : cause externe"
         if self.already_tried(key):
             return "coupable déjà traité"
         already = {sha for r in self.repairs() for sha in r["reverted"]}
@@ -241,11 +272,13 @@ class Repairer:
         if window and all(sha in already for sha in window):  # déjà annulés par une réparation
             return "déjà annulé : relancé" if self.dispatch(wf_id, base) else "déjà annulé"
         suspects = [(sha, self.merged_pr(sha)) for sha in window if sha not in already]
-        merged = [(sha, pr) for sha, pr in suspects if pr]
+        merged = [(sha, pr) for sha, pr in suspects
+                  if pr and not (pr.get("head") or {}).get("ref", "").startswith(INFRA_PREFIXES)]
         direct = [sha for sha, pr in suspects if not pr]
         if not merged:
             self.notify(key, title, f"« {name} » échoue depuis le commit `{key[:7]}` "
-                        f"([run]({bad['html_url']})), poussé directement sans PR : je ne l'annule pas.")
+                        f"([run]({bad['html_url']})), poussé directement sans PR : je ne l'annule pas."
+                        + self.log_excerpt(run))
             self.escalate(key, "la panne vient d'un commit poussé directement, que je n'annule jamais.")
             return "alerte : commit direct"
 
@@ -263,7 +296,8 @@ class Repairer:
                  "(les runs intermédiaires n'ont pas pu tourner, je ne sais pas lequel est en cause)"
                  if plural else f"🔧 « {name} » échouait depuis le merge de **#{merged[0][1]['number']} "
                  f"{merged[0][1]['title']}**")
-        self.notify(key, title, f"{intro} ([run]({bad['html_url']})), même après une relance.\n\n"
+        self.notify(key, title, f"{intro} ([run]({bad['html_url']})), même après une relance."
+                    + self.log_excerpt(run) + "\n\n"
                     f"{'Merges annulés' if plural else 'Merge annulé'} automatiquement :\n{listing}\n\n"
                     + (f"Commits poussés directement, laissés en place : "
                        f"{', '.join(f'`{s[:7]}`' for s in direct)}\n\n" if direct else "")
