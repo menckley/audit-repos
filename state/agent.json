@@ -745,6 +745,14 @@
       "title": "Bump certifi from 2026.10.23 to 2026.11.20",
       "pr": "https://github.com/menckley/settlements-eex/pull/11",
       "repo": "settlements-eex"
+    },
+    {
+      "type": "clarify",
+      "at": "2026-11-25T21:57:38+00:00",
+      "reported": false,
+      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
+      "issue": "https://github.com/menckley/power-hpfc/issues/24",
+      "security": false
     }
   ],
   "last_bilan": "2026-11-25T21:47:22+00:00",
