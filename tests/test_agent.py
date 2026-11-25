@@ -845,6 +845,34 @@ def test_error_excerpt():
     print("OK 28 le Développeur lit le journal d'erreur des jobs (et s'en passe sans permission)")
 
 
+def test_retry_after_max_turns():
+    import importlib
+    import implement as imp
+    imp = importlib.reload(imp)  # les tests précédents ont remplacé code_task par un faux
+    answers = [common.MAX_TURNS_MARK + " (150 tours)\nje lisais encore le code", "corrigé"]
+    turns_used, counts = [], iter(["0", "1"])
+    imp.fresh_clone = lambda repo, dest: Path(tempfile.mkdtemp())
+    imp.git_identity = lambda d: None
+    imp.clean_generated = lambda d: False
+    imp.push = lambda *a, **k: None
+    imp.sh = lambda *a, **k: next(counts) if "--count" in a else ""
+    imp.run_claude = lambda prompt, cwd, tools, turns: turns_used.append(turns) or answers.pop(0)
+
+    class G:
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def open_pr_for(self, *a):
+            return None
+
+        def create_pr(self, repo, branch, base, title, body):
+            return {"number": 30, "html_url": "https://pr/30"}
+
+    pr = imp.code_task(G(), "power-hpfc", "agent/incident-24", {}, None, prompt_name="incident.md")
+    assert pr["number"] == 30 and turns_used == [150, 300], turns_used
+    print("OK 29 arrêt sur la limite de tours : seconde tentative automatique avec deux fois plus de marge")
+
+
 if __name__ == "__main__":
     main()
     test_alert_install()
@@ -856,4 +884,5 @@ if __name__ == "__main__":
     test_relaunch_and_audit()
     test_repairer_external()
     test_error_excerpt()
+    test_retry_after_max_turns()
     print("\nTous les tests passent.")

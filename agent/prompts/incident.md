@@ -37,6 +37,15 @@ Pour obtenir le SHA d'une version, utilise `git ls-remote` (lecture seule), par 
   ou la logique d'un workflow de collecte.
 - Tu ne pousses rien : tu commites seulement en local.
 
+## Contraintes de cet environnement
+
+- Tu n'as **pas** les identifiants des API externes du projet (EEX, ENTSO-E, Mistral…) : n'essaie
+  pas d'exécuter le pipeline complet ni d'appeler ces API. Pars du **journal d'erreur** et des
+  précisions du propriétaire, reproduis le problème avec les **tests unitaires** et des données
+  factices (les tests existants montrent comment simuler les clients d'API).
+- Ton nombre d'actions est limité : **écris dès le début** ton diagnostic provisoire dans
+  `{{PR_PATH}}`, puis complète-le à la fin. Commite dès qu'une correction testée est prête.
+
 ## Méthode
 
 1. **Comprends la cause réelle** : lis les échecs, reproduis-les (installe les dépendances,

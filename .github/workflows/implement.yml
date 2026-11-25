@@ -4,10 +4,10 @@ on:
   # Dès que tu coches « Lancer », « Plus tard » ou « Refuser » dans une issue de ce repo.
   issues:
     types: [edited, labeled]
-  # Toutes les heures : tâches automatiques, merges après CI verte, Dependabot,
+  # Toutes les 15 minutes : incidents confiés par le Réparateur, tâches automatiques, merges après CI verte, Dependabot,
   # surveillance après merge, repo privé audit-securite, reprises après quota.
   schedule:
-    - cron: "15 * * * *"
+    - cron: "*/15 * * * *"   # GitHub saute souvent des passages : on en prévoit beaucoup
   # Aussi lancé par lui-même tant qu'il reste du travail (les passages planifiés de GitHub
   # ne sont pas fiables).
   workflow_dispatch:

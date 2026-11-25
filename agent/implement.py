@@ -23,7 +23,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from common import (AGENT_MARK, CONFIG, DECISION_START, error_excerpt, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
+from common import (AGENT_MARK, CONFIG, DECISION_START, MAX_TURNS_MARK, error_excerpt, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
                     REPAIR_BACK, REPAIR_MARK,
                     ROOT, SECURITY_REPO, V2, GitHub, GitHubError, QuotaExhausted, commit_state,
                     compose_body, decision_block, footer, refresh_decision, fresh_clone, is_auto, render,
@@ -285,7 +285,15 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
     report = work / f"{branch.replace('/', '-')}-pr.md"
     report.unlink(missing_ok=True)
     prompt = render(prompt_name, {**values, "PR_PATH": str(report), "BASE": base})
-    final = run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
+    turns = CONFIG["incident_max_turns"] if prompt_name == "incident.md" else CONFIG["implement_max_turns"]
+    final = run_claude(prompt, repo_dir, CODE_TOOLS, turns)
+    commits = int(sh("git", "rev-list", "--count", f"origin/{base}..HEAD", cwd=repo_dir).strip())
+    if commits == 0 and final.startswith(MAX_TURNS_MARK):
+        # Arrêté en plein travail : on reprend une fois, avec deux fois plus de marge.
+        print(f"  ↻ limite de {turns} tours atteinte sans commit : nouvelle tentative ({turns * 2} tours)")
+        final = run_claude(prompt + "\n\nC'est ta **seconde tentative** : la première s'est arrêtée faute "
+                           "de temps. Va droit au but : diagnostic, correction minimale, test, commit.",
+                           repo_dir, CODE_TOOLS, turns * 2)
 
     title, body = read_report(report)
     commits = int(sh("git", "rev-list", "--count", f"origin/{base}..HEAD", cwd=repo_dir).strip())

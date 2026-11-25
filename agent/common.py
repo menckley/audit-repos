@@ -344,6 +344,9 @@ class GitHub:
 # --------------------------------------------------------------------------- Claude
 
 
+MAX_TURNS_MARK = "[arrêt : nombre maximal de tours atteint]"
+
+
 class QuotaExhausted(Exception):
     """Le quota de l'abonnement est épuisé : on reprendra au prochain passage."""
 
@@ -388,7 +391,7 @@ def run_claude(prompt: str, cwd: Path, allowed_tools: list[str], max_turns: int)
         # Nombre de tours atteint : le travail fait reste exploitable, l'appelant vérifie.
         if data.get("subtype") == "error_max_turns":
             print("⚠️  Claude a atteint le nombre maximal de tours.")
-            return data.get("result", "")
+            return f"{MAX_TURNS_MARK} ({max_turns} tours)\n" + (data.get("result") or "")
         raise ClaudeError(truncate(f"code {proc.returncode} : {proc.stderr or out}", 600))
     return data.get("result", "")
 
