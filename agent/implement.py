@@ -684,7 +684,9 @@ def is_major(pr: dict) -> bool:
     return not m or m[1] != m[2]
 
 
-def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
+def dependabot(gh: GitHub, state: dict, repos: list[str], can_claude: bool = True) -> bool:
+    """Merge les mises à jour non majeures à CI verte ; tente une fois de corriger celles dont
+    la CI est rouge. Renvoie False si le quota a été épuisé."""
     for repo in repos:
         prs = sorted((p for p in gh.open_pulls(repo) if p["user"]["login"] == "dependabot[bot]"),
                      key=lambda p: p["number"])
@@ -695,8 +697,25 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
                 if once(state, f"major:{key}"):
                     log(state, "dependabot_major", title=pr["title"], pr=pr["html_url"], repo=repo)
                 continue
-            status, _ = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
+            status, failed = ci_status(gh, repo, pr["head"]["sha"], parse(pr["created_at"]))
             if status == "failure":
+                # Une seule tentative de correction par PR (ex. fichiers de verrouillage à régénérer).
+                if can_claude and once(state, f"depfix:{key}"):
+                    try:
+                        fixed = fix_ci(gh, {"target": repo, "branch": pr["head"]["ref"], "title": pr["title"]},
+                                       failed, pr["title"])
+                    except QuotaExhausted:
+                        state["seen"].remove(f"depfix:{key}")
+                        return False
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"  ✗ correction Dependabot {key} : {scrub(str(exc))[:200]}")
+                        fixed = False
+                    if fixed:
+                        gh.write("POST", f"/repos/{OWNER}/{repo}/issues/{pr['number']}/comments",
+                                 {"body": f"{AGENT_MARK}\n🛠️ CI rouge : j'ai poussé une correction sur cette branche. "
+                                          "Je la mergerai si la CI repasse au vert."})
+                        print(f"  🔧 PR Dependabot corrigée : {pr['html_url']}")
+                        continue
                 if once(state, f"red:{key}:{pr['head']['sha']}"):
                     log(state, "dependabot_red", title=pr["title"], pr=pr["html_url"], repo=repo)
                 continue
@@ -718,6 +737,7 @@ def dependabot(gh: GitHub, state: dict, repos: list[str]) -> None:
                 log(state, "dependabot_merged", title=pr["title"], pr=pr["html_url"], repo=repo)
                 print(f"  ✓ Dependabot mergée : {pr['html_url']}")
                 merged_one = True
+    return True
 
 
 # --------------------------------------------------------------------------- surveillance
@@ -1108,7 +1128,7 @@ def main() -> None:
 
         if CONFIG["dependabot_automerge"]:
             print("\n— Dependabot")
-            dependabot(gh, state, public)
+            can_claude = dependabot(gh, state, public, can_claude) and can_claude
         print("\n— Alerte du Réparateur dans chaque repo")
         ensure_alerts(gh, state, public)
         print("\n— Hygiène : fichiers générés et branches mergées")

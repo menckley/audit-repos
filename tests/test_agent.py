@@ -242,7 +242,18 @@ def main():
     gh.dependabot_prs["pricer"] = gh.dependabot_prs["pricer"][1:]
     im.dependabot(gh, st, ["pricer"])
     assert sum(e["type"] == "dependabot_major" for e in st["log"]) == 1, "majeure signalée une fois"
-    print("OK 8 Dependabot")
+    # PR non majeure à CI rouge (ex. uv.lock non régénéré) : une seule tentative de correction
+    red = dep(13, "build(deps): bump watchdog from 7.1.0 to 7.1.1", "dependabot/uv/dependances-python-x")
+    gh.dependabot_prs["pricer"] = [red]
+    gh.checks["d13"] = [{"id": 13, "name": "lock", "status": "completed", "conclusion": "failure",
+                         "output": {"summary": "requirements non dérivés de uv.lock"}}]
+    attempts = []
+    im.fix_ci = lambda g, e, failed, title: attempts.append((e["branch"], title)) or True
+    im.dependabot(gh, st, ["pricer"])
+    im.dependabot(gh, st, ["pricer"])
+    assert attempts == [("dependabot/uv/dependances-python-x", red["title"])], attempts
+    assert any(e["type"] == "dependabot_red" for e in st["log"]), "toujours rouge après la tentative : signalé"
+    print("OK 8 Dependabot (dont une tentative de correction des PR à CI rouge)")
 
     # --- 9. une annulation faite par le Réparateur rouvre la tâche de l'agent
     agent_merge = st["watch"][0]

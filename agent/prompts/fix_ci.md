@@ -25,6 +25,15 @@ N'invente jamais un SHA.
   solution est de toucher à quelque chose d'interdit : **ne commite rien**.
 - Tu ne pousses rien : tu commites seulement en local.
 
+## Fichiers de verrouillage
+
+Si le projet utilise `uv` (fichier `uv.lock`) et que la CI vérifie que des fichiers
+`requirements*.txt` en dérivent : `uv.lock` est la source de vérité. Installe `uv` (`pip install
+uv`, à la version utilisée par la CI si elle est indiquée), mets à jour le verrou (`uv lock`, ou
+`uv lock --upgrade-package <paquet>` pour la mise à jour visée), puis régénère les fichiers
+dérivés **exactement** avec les commandes de la CI (lis `.github/workflows/`). Ne modifie jamais
+ces fichiers à la main.
+
 ## Méthode
 
 1. Lis les échecs ci-dessus et reproduis-les localement (installe les dépendances, lance
