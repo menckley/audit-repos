@@ -30,7 +30,7 @@ import re
 from pathlib import Path
 
 from common import (BROKEN, OWNER, REPAIR_BACK, REPAIR_MARK, GitHub, GitHubError,
-                    failure_window, sh)
+                    error_excerpt, failure_window, sh)
 
 MARK = REPAIR_MARK
 BACK = REPAIR_BACK
@@ -39,23 +39,7 @@ SHA_RE = re.compile(re.escape(MARK) + r" ([0-9a-f]{40})")
 REVERTED_RE = re.compile(r"^annulés: ([0-9a-f ]+)$", re.M)
 WORKFLOW_RE = re.compile(r"^workflow: (\d+)$", re.M)
 ESCALATE = "à-développer"
-ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
-TIMESTAMP_RE = re.compile(r"^\d{4}-\d\d-\d\dT[\d:.]+Z ")
 INFRA_PREFIXES = ("agent/alerte", "agent/hygiene")  # installation de l'alerte, hygiène : jamais annulées
-
-
-def error_excerpt(raw: str, lines: int = 60) -> str:
-    """Partie utile d'un journal de job : la sortie de l'étape en échec jusqu'à son erreur
-    (« ##[error] »), sans le nettoyage final de GitHub qui suit."""
-    clean = [ANSI_RE.sub("", TIMESTAMP_RE.sub("", line)) for line in raw.splitlines()]
-    error = next((i for i, line in enumerate(clean) if line.startswith("##[error]")), None)
-    if error is None:  # pas de marqueur : on cherche une trace Python ou un message d'erreur
-        error = next((i for i in range(len(clean) - 1, -1, -1)
-                      if re.search(r"Traceback|Error|Exception|error:", clean[i])), len(clean) - 1)
-    start = max((i for i in range(error) if clean[i].startswith("##[group]Run ")), default=0)
-    start = max(start, error - lines)
-    section = [line for line in clean[start:error + 1] if not line.startswith(("##[group]", "##[endgroup]"))]
-    return "\n".join(section)[-4000:]
 
 
 class Repairer:

@@ -23,7 +23,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from common import (AGENT_MARK, CONFIG, DECISION_START, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
+from common import (AGENT_MARK, CONFIG, DECISION_START, error_excerpt, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
                     REPAIR_BACK, REPAIR_MARK,
                     ROOT, SECURITY_REPO, V2, GitHub, GitHubError, QuotaExhausted, commit_state,
                     compose_body, decision_block, footer, refresh_decision, fresh_clone, is_auto, render,
@@ -189,15 +189,26 @@ def ci_status(gh: GitHub, repo: str, sha: str, since: datetime) -> tuple[str, li
     return ("failure" if failed else "success"), failed
 
 
+def job_log(gh: GitHub, repo: str, job_id: int) -> str:
+    """Partie utile du journal d'un job (nécessite la permission Actions en lecture sur GH_PAT).
+    Chaîne vide si le journal n'est pas accessible."""
+    try:
+        return error_excerpt(gh.text(f"/repos/{OWNER}/{repo}/actions/jobs/{job_id}/logs"), 80)
+    except Exception:  # noqa: BLE001 — permission absente, journal expiré… : on fait sans
+        return ""
+
+
 def failure_report(gh: GitHub, repo: str, failed: list[dict]) -> str:
     parts = []
     for run in failed[:5]:
         out = run.get("output") or {}
         notes = [f"- {a.get('path')}:{a.get('start_line')} {a.get('message')}"
                  for a in gh.annotations(repo, run["id"])[:20]]
+        log_text = job_log(gh, repo, run["id"])  # pour GitHub Actions, check run = job
         parts.append(f"### {run['name']} → {run['conclusion']}\n"
                      f"{truncate(out.get('summary') or '', 1500)}\n"
-                     f"{truncate(out.get('text') or '', 3000)}\n" + "\n".join(notes))
+                     f"{truncate(out.get('text') or '', 3000)}\n" + "\n".join(notes)
+                     + (f"\n\nJournal de l'erreur :\n```\n{log_text}\n```" if log_text else ""))
     return "\n\n".join(parts) or "(aucun détail disponible)"
 
 

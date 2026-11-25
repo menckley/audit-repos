@@ -420,6 +420,26 @@ def first_failure(runs: list[dict]) -> dict | None:
     return failure_window(runs)[1]
 
 
+# --------------------------------------------------------------------------- journaux
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+TIMESTAMP_RE = re.compile(r"^\d{4}-\d\d-\d\dT[\d:.]+Z ")
+
+
+def error_excerpt(raw: str, lines: int = 60) -> str:
+    """Partie utile d'un journal de job : la sortie de l'étape en échec jusqu'à son erreur
+    (« ##[error] »), sans le nettoyage final de GitHub qui suit."""
+    clean = [ANSI_RE.sub("", TIMESTAMP_RE.sub("", line)) for line in raw.splitlines()]
+    error = next((i for i, line in enumerate(clean) if line.startswith("##[error]")), None)
+    if error is None:  # pas de marqueur : on cherche une trace Python ou un message d'erreur
+        error = next((i for i in range(len(clean) - 1, -1, -1)
+                      if re.search(r"Traceback|Error|Exception|error:", clean[i])), len(clean) - 1)
+    start = max((i for i in range(error) if clean[i].startswith("##[group]Run ")), default=0)
+    start = max(start, error - lines)
+    section = [line for line in clean[start:error + 1] if not line.startswith(("##[group]", "##[endgroup]"))]
+    return "\n".join(section)[-4000:]
+
+
 # --------------------------------------------------------------------------- git
 
 

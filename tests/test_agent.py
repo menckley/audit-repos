@@ -823,6 +823,27 @@ def test_error_excerpt():
     assert lag.labels == ["à-développer"], "l'incident tout juste créé reçoit bien le label"
     print("OK 27 escalade : le label est posé même si GitHub ne liste pas encore l'incident")
 
+    import implement as imp
+
+    class WithLogs:
+        def annotations(self, repo, run_id):
+            return []
+
+        def text(self, path):
+            assert path.endswith("/actions/jobs/7/logs")
+            return log
+
+    report = imp.failure_report(WithLogs(), "power-hpfc", [{"id": 7, "name": "hpfc", "conclusion": "failure"}])
+    assert "KeyError: 'settlement_price'" in report and "Post job cleanup" not in report
+
+    class NoPermission(WithLogs):
+        def text(self, path):
+            raise common.GitHubError(403, "Resource not accessible")
+
+    report = imp.failure_report(NoPermission(), "power-hpfc", [{"id": 7, "name": "hpfc", "conclusion": "failure"}])
+    assert "hpfc → failure" in report and "Journal" not in report, "sans permission : on fait sans"
+    print("OK 28 le Développeur lit le journal d'erreur des jobs (et s'en passe sans permission)")
+
 
 if __name__ == "__main__":
     main()

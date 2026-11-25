@@ -99,7 +99,7 @@ Secrets du repo (*Settings → Secrets and variables → Actions*) :
 | Secret | Contenu |
 |---|---|
 | `CLAUDE_CODE_OAUTH_TOKEN` | résultat de `claude setup-token` (lié à l'abonnement Pro) |
-| `GH_PAT` | token GitHub *fine-grained*, *All repositories* : Contents, Issues, Pull requests, Workflows en lecture/écriture |
+| `GH_PAT` | token GitHub *fine-grained*, *All repositories* : Contents, Issues, Pull requests, Workflows en lecture/écriture, et **Actions en lecture** (journaux d'erreur des CI et des workflows) |
 
 ## Lancer à la main
 
