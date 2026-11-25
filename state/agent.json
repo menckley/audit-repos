@@ -1,21 +1,5 @@
 {
-  "pending": [
-    {
-      "target": "power-hpfc",
-      "number": 25,
-      "url": "https://github.com/menckley/power-hpfc/pull/25",
-      "branch": "agent/incident-24",
-      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
-      "issue_repo": "power-hpfc",
-      "issue": 24,
-      "security": false,
-      "opened": "2026-11-25T22:24:58+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": "",
-      "kind": "incident"
-    }
-  ],
+  "pending": [],
   "watch": [
     {
       "target": "pricer",
@@ -85,6 +69,16 @@
       "title": "Bump certifi from 2026.10.23 to 2026.11.20",
       "issue_repo": null,
       "issue": null,
+      "security": false
+    },
+    {
+      "target": "power-hpfc",
+      "sha": "167ee6a631c8454eae4aa274518be272de76709b",
+      "merged": "2026-11-25T22:32:05+00:00",
+      "pr": "https://github.com/menckley/power-hpfc/pull/25",
+      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
+      "issue_repo": "power-hpfc",
+      "issue": 24,
       "security": false
     }
   ],
@@ -779,6 +773,16 @@
       "issue": "https://github.com/menckley/power-hpfc/issues/24",
       "security": false,
       "detail": "la CI est rouge et je n'ai pas trouvé de correction sûre."
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-25T22:32:05+00:00",
+      "reported": false,
+      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
+      "pr": "https://github.com/menckley/power-hpfc/pull/25",
+      "issue": "https://github.com/menckley/power-hpfc/issues/24",
+      "security": false,
+      "repo": "power-hpfc"
     }
   ],
   "last_bilan": "2026-11-25T21:47:22+00:00",
