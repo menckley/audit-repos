@@ -800,6 +800,29 @@ def test_error_excerpt():
     assert "Post job cleanup" not in out and "Cleaning up" not in out and "2026-11-25T" not in out
     print("OK 26 extrait du journal : l'étape en échec et son erreur, sans le nettoyage final")
 
+    class Lagging:  # GitHub ne liste pas encore l'issue qu'on vient de créer
+        def __init__(self):
+            self.labels = []
+
+        def issues(self, repo, state="open", labels=None):
+            return []
+
+        def create_issue(self, repo, title, body, labels):
+            return {"number": 24, "body": body, "state": "open"}
+
+        def add_labels(self, repo, n, labels):
+            self.labels += labels
+
+        def write(self, method, path, data=None):
+            return {}
+
+    lag = Lagging()
+    rp = repair.Repairer(lag, "power-hpfc", Path("."))
+    rp.notify("k", "titre", "texte")
+    rp.escalate("k", "pourquoi.")
+    assert lag.labels == ["à-développer"], "l'incident tout juste créé reçoit bien le label"
+    print("OK 27 escalade : le label est posé même si GitHub ne liste pas encore l'incident")
+
 
 if __name__ == "__main__":
     main()

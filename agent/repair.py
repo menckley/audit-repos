@@ -61,10 +61,15 @@ def error_excerpt(raw: str, lines: int = 60) -> str:
 class Repairer:
     def __init__(self, gh: GitHub, repo: str, repo_dir: Path):
         self.gh, self.repo, self.dir = gh, repo, repo_dir
+        self.created: dict[str, dict] = {}
         self.api = f"/repos/{OWNER}/{repo}"
 
     # ----------------------------------------------------------------- notifications
     def incident(self, key: str) -> dict | None:
+        # Une issue tout juste créée n'apparaît pas tout de suite dans la liste de GitHub :
+        # on garde celles de ce passage en mémoire.
+        if key in self.created:
+            return self.created[key]
         for issue in self.gh.issues(self.repo, state="open", labels=LABEL):
             if f"<!-- incident: {key} -->" in (issue.get("body") or ""):
                 return issue
@@ -85,7 +90,10 @@ class Repairer:
             number = issue["number"]
         else:
             body = f"@{OWNER} {text}\n\n_— 🚑 Le Réparateur (audit-repos)_\n<!-- incident: {key} -->"
-            number = self.gh.create_issue(self.repo, title, body, [LABEL])["number"]
+            issue = self.gh.create_issue(self.repo, title, body, [LABEL])
+            issue.setdefault("labels", [{"name": LABEL}])
+            self.created[key] = issue
+            number = issue["number"]
         if close:
             self.gh.close_issue(self.repo, number)
 
@@ -123,6 +131,7 @@ class Repairer:
         if not issue or "à-développer" in {l["name"] for l in issue.get("labels", [])}:
             return
         self.gh.add_labels(self.repo, issue["number"], [ESCALATE])
+        issue.setdefault("labels", []).append({"name": ESCALATE})
         self.gh.write("POST", f"{self.api}/issues/{issue['number']}/comments",
                       {"body": f"🛠️ Je passe la main au **Développeur** : {why} Il va analyser la panne et "
                                "proposer une vraie correction (PR mergée seulement si la CI est verte)."})
