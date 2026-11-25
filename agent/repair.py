@@ -190,6 +190,8 @@ class Repairer:
         name, wf_id = run["name"], run["workflow_id"]
         message = (run.get("head_commit") or {}).get("message", "")
         repaired = SHA_RE.search(message)
+        if repaired and BACK in message:
+            repaired = None  # réparation rétablie : ce code est traité comme du code ordinaire
         info = {}
         if repaired:
             info = {"key": repaired[1], "dev": "développeur: oui" in message,

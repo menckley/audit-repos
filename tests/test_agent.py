@@ -769,6 +769,16 @@ def test_repairer_external():
     assert not any(a[:2] == ("git", "revert") for a in git)
     print("OK 24 l'installation de l'alerte et l'hygiène ne sont jamais annulées")
 
+    # sur un commit qui rétablit une réparation, une panne est diagnostiquée normalement
+    g3 = G(); rp3 = repair.Repairer(g3, "power-hpfc", Path("."))
+    back = f"revert: rétablir {repair.BACK} {repair.MARK} {'3' * 40}"
+    g3.runs = [run("success", 1500), run("failure", 60, 2)]
+    r = run("failure", 60, attempt=2)
+    r["head_commit"]["message"] = back
+    repair.sh = lambda *a, **k: ""
+    assert rp3.handle(r) == "alerte : cause externe", "plus de « déjà rétabli » qui fait taire l'alerte"
+    print("OK 25 après un rétablissement, une panne est de nouveau diagnostiquée (journal compris)")
+
 
 if __name__ == "__main__":
     main()
