@@ -11,6 +11,11 @@ se termine sur la branche principale.
 4. Échec après une annulation      → le code n'était pas en cause : le changement est
                                      rétabli et le propriétaire alerté.
 
+5. Autre workflow en échec sur du
+   code ancien après une réparation → relancé sur le code réparé, sans nouvelle annulation.
+6. Panne non résolue, ou réparation qui a annulé des changements utiles (Dependabot, tes
+   PR) → passe la main au Développeur (label `à-développer`), qui corrige pour de bon.
+
 Un même commit n'est jamais annulé deux fois. Un commit poussé directement (sans PR) n'est
 jamais annulé. Chaque incident fait l'objet d'une issue qui mentionne le propriétaire
 (donc un e-mail), puis de commentaires à chaque étape.
@@ -31,6 +36,9 @@ MARK = REPAIR_MARK
 BACK = REPAIR_BACK
 LABEL = "réparation"
 SHA_RE = re.compile(re.escape(MARK) + r" ([0-9a-f]{40})")
+REVERTED_RE = re.compile(r"^annulés: ([0-9a-f ]+)$", re.M)
+WORKFLOW_RE = re.compile(r"^workflow: (\d+)$", re.M)
+ESCALATE = "à-développer"
 
 
 class Repairer:
@@ -92,6 +100,40 @@ class Repairer:
             return None
         return next((p for p in pulls if p.get("merged_at") and p.get("merge_commit_sha") == sha), None)
 
+    def escalate(self, key: str, why: str) -> None:
+        """Passe la main au Développeur sur l'incident (il corrigera avec une PR)."""
+        issue = self.incident(key)
+        if not issue or "à-développer" in {l["name"] for l in issue.get("labels", [])}:
+            return
+        self.gh.add_labels(self.repo, issue["number"], [ESCALATE])
+        self.gh.write("POST", f"{self.api}/issues/{issue['number']}/comments",
+                      {"body": f"🛠️ Je passe la main au **Développeur** : {why} Il va analyser la panne et "
+                               "proposer une vraie correction (PR mergée seulement si la CI est verte)."})
+
+    def repairs(self) -> list[dict]:
+        """Réparations encore en place (non rétablies), des plus récentes aux plus anciennes."""
+        commits = self.gh.get(f"{self.api}/commits", per_page=100) or []
+        restored = {m[1] for c in commits if BACK in c["commit"]["message"]
+                    for m in [SHA_RE.search(c["commit"]["message"])] if m}
+        found = []
+        for c in commits:
+            msg = c["commit"]["message"]
+            key = SHA_RE.search(msg)
+            if key and BACK not in msg and key[1] not in restored:
+                shas = REVERTED_RE.search(msg)
+                wf = WORKFLOW_RE.search(msg)
+                found.append({"sha": c["sha"], "key": key[1], "reverted": shas[1].split() if shas else [],
+                              "workflow": int(wf[1]) if wf else None, "dev": "développeur: oui" in msg})
+        return found
+
+    def repaired_since(self, sha: str, base: str) -> bool:
+        """Vrai si une réparation a été poussée sur la branche principale après ce commit."""
+        try:
+            log = sh("git", "log", "--format=%B", f"{sha}..origin/{base}", cwd=self.dir)
+        except RuntimeError:
+            return False
+        return MARK in log
+
     def merges_since(self, good: str, bad: str) -> list[str]:
         """Commits arrivés sur la branche principale après `good`, jusqu'à `bad` inclus,
         du plus récent au plus ancien."""
@@ -128,32 +170,55 @@ class Repairer:
         name, wf_id = run["name"], run["workflow_id"]
         message = (run.get("head_commit") or {}).get("message", "")
         repaired = SHA_RE.search(message)
+        info = {}
+        if repaired:
+            info = {"key": repaired[1], "dev": "développeur: oui" in message,
+                    "workflow": int(WORKFLOW_RE.search(message)[1]) if WORKFLOW_RE.search(message) else wf_id}
 
         if run["conclusion"] == "success":
-            if repaired and BACK not in message:
-                key = repaired[1]
-                self.follow_up(key, f"✅ **Réparé** : « {name} » repasse au vert après l'annulation "
-                            f"([run]({run['html_url']})). Le changement fautif reste annulé : il "
-                            "faudra l'adapter avant de le remettre.", close=True)
-                return "réparé"
-            return "rien à faire"
+            if not repaired or BACK in message:
+                return "rien à faire"
+            key = info["key"]
+            if wf_id != info["workflow"]:
+                self.follow_up(key, f"✅ « {name} » repasse aussi au vert ([run]({run['html_url']})).")
+                return "autre workflow réparé"
+            if info["dev"]:
+                self.follow_up(key, f"✅ **Réparé** : « {name} » repasse au vert ([run]({run['html_url']})).")
+                self.escalate(key, "les changements annulés contenaient des mises à jour ou des PR utiles, "
+                                   "à réintégrer proprement sans la cause de la panne.")
+                return "réparé, Développeur prévenu"
+            self.follow_up(key, f"✅ **Réparé** : « {name} » repasse au vert après l'annulation "
+                           f"([run]({run['html_url']})).", close=True)
+            return "réparé"
 
         if run["conclusion"] not in BROKEN:
             return "rien à faire"
 
-        if repaired:  # échec malgré l'annulation : le code n'était pas en cause
-            key = repaired[1]
+        if repaired:  # échec sur du code réparé
+            key = info["key"]
             if BACK in message:
                 return "déjà rétabli"
+            if wf_id != info["workflow"]:
+                self.follow_up(key, f"⚠️ « {name} » échoue aussi, même sur le code réparé "
+                               f"([run]({run['html_url']})).")
+                self.escalate(key, f"« {name} » échoue toujours après la réparation.")
+                return "autre workflow en échec : Développeur prévenu"
             repair = self.repair_commit(key)
             if not repair:
                 return "annulation introuvable"
             self.revert([repair], f"revert: rétablir {key[:7]} (l'annulation n'a pas aidé) "
                         f"{BACK} {MARK} {key}", base)
-            self.follow_up(key, "⚠️ L'annulation **n'a pas suffi** : « " + name + "» échoue toujours "
-                        f"([run]({run['html_url']})). Le changement a donc été **rétabli** : le problème "
-                        "vient d'ailleurs (service externe, données, configuration). **À regarder.**")
+            self.follow_up(key, "⚠️ L'annulation **n'a pas suffi** : « " + name + " » échoue toujours "
+                           f"([run]({run['html_url']})). Le changement a donc été **rétabli** : le "
+                           "problème vient d'ailleurs (service externe, données, configuration).")
+            self.escalate(key, "l'annulation n'a rien réparé.")
             return "rétabli"
+
+        # Le code a été réparé depuis ce run : on relance sur le code actuel, rien à annuler.
+        if self.repaired_since(run["head_sha"], base):
+            if self.dispatch(wf_id, base):
+                return "relancé sur le code réparé"
+            return "code déjà réparé (relance manuelle impossible)"
 
         if run.get("run_attempt", 1) == 1:
             self.rerun(run)
@@ -166,25 +231,33 @@ class Repairer:
         title = f"🚑 « {name} » en échec sur {self.repo}"
         if not bad:
             self.notify(key, title, f"« {name} » échoue ([run]({run['html_url']})) et n'a jamais "
-                        "réussi : je ne peux pas désigner de coupable. **À regarder.**")
+                        "réussi : je ne peux pas désigner de coupable.")
+            self.escalate(key, "je ne peux pas désigner de coupable.")
             return "alerte : jamais réussi"
         if self.already_tried(key):
             return "coupable déjà traité"
-        suspects = [(sha, self.merged_pr(sha)) for sha in self.merges_since(good["head_sha"], key)]
+        already = {sha for r in self.repairs() for sha in r["reverted"]}
+        window = self.merges_since(good["head_sha"], key)
+        if window and all(sha in already for sha in window):  # déjà annulés par une réparation
+            return "déjà annulé : relancé" if self.dispatch(wf_id, base) else "déjà annulé"
+        suspects = [(sha, self.merged_pr(sha)) for sha in window if sha not in already]
         merged = [(sha, pr) for sha, pr in suspects if pr]
         direct = [sha for sha, pr in suspects if not pr]
         if not merged:
             self.notify(key, title, f"« {name} » échoue depuis le commit `{key[:7]}` "
-                        f"([run]({bad['html_url']})), poussé directement sans PR : je ne l'annule pas. "
-                        "**À regarder.**")
+                        f"([run]({bad['html_url']})), poussé directement sans PR : je ne l'annule pas.")
+            self.escalate(key, "la panne vient d'un commit poussé directement, que je n'annule jamais.")
             return "alerte : commit direct"
 
         listing = "\n".join(f"- #{pr['number']} {pr['title']}" for _, pr in merged)
         plural = len(merged) > 1
+        dev = any(not (pr.get("head") or {}).get("ref", "").startswith("agent/") for _, pr in merged)
         self.revert([sha for sha, _ in merged],
                     f"revert: annuler {len(merged)} merge(s) depuis le dernier état vert {MARK} {key}\n\n"
                     f"« {name} » échoue depuis ({bad['html_url']}). Annulation automatique par le "
-                    f"Réparateur :\n{listing}", base)
+                    f"Réparateur :\n{listing}\n\n"
+                    f"annulés: {' '.join(sha for sha, _ in merged)}\nworkflow: {wf_id}\n"
+                    f"développeur: {'oui' if dev else 'non'}", base)
         relaunched = self.dispatch(wf_id, base)
         intro = (f"🔧 « {name} » échoue depuis l'arrivée de **{len(merged)} merges rapprochés** "
                  "(les runs intermédiaires n'ont pas pu tourner, je ne sais pas lequel est en cause)"
@@ -194,13 +267,13 @@ class Repairer:
                     f"{'Merges annulés' if plural else 'Merge annulé'} automatiquement :\n{listing}\n\n"
                     + (f"Commits poussés directement, laissés en place : "
                        f"{', '.join(f'`{s[:7]}`' for s in direct)}\n\n" if direct else "")
-                    + ("Le workflow a été **relancé** : je te confirme ici s'il repasse au vert."
+                    + ("Le workflow a été **relancé** : je te confirme ici s'il repasse au vert. Les autres "
+                       "workflows en échec seront relancés sur le code réparé."
                        if relaunched else "Ce workflow ne peut pas être relancé à la main : la "
                        "vérification aura lieu à son prochain passage.")
-                    + ("\n\nUne fois réparé, remets ces changements **un par un** pour trouver le "
-                       "fautif (Dependabot les reproposera de lui-même)." if plural else ""))
+                    + ("\n\nUne fois réparé, le Développeur réintégrera proprement ce qui était utile."
+                       if dev else ""))
         return "annulé et relancé"
-
 
 def main() -> None:
     gh = GitHub(os.environ["GITHUB_TOKEN"])

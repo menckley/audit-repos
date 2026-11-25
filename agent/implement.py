@@ -36,7 +36,7 @@ CODE_TOOLS = READ_TOOLS + [
     "Bash(git status:*)", "Bash(git diff:*)", "Bash(git add:*)", "Bash(git commit:*)",
     "Bash(git mv:*)", "Bash(git rm:*)", "Bash(mkdir:*)", "Bash(git ls-remote:*)",
     "Bash(pip install:*)", "Bash(python -m pip install:*)", "Bash(python -m pytest:*)",
-    "Bash(pytest:*)", "Bash(python:*)", "Bash(ruff:*)",
+    "Bash(pytest:*)", "Bash(python:*)", "Bash(ruff:*)", "Bash(uv:*)",
 ]
 STATE_PATH = ROOT / "state" / "agent.json"
 # Labels qui signifient « déjà pris en charge » ou « attend le propriétaire ».
@@ -263,7 +263,7 @@ def clean_generated(repo_dir: Path) -> bool:
 
 
 def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
-              issue_ref: str | None) -> dict:
+              issue_ref: str | None, prompt_name: str = "implement.md") -> dict:
     """Clone, laisse Claude travailler sur une branche, pousse et ouvre (ou réutilise) la PR."""
     base = gh.repo(target)["default_branch"]
     work = tmp_dir("implement")
@@ -273,7 +273,7 @@ def code_task(gh: GitHub, target: str, branch: str, values: dict[str, str],
 
     report = work / f"{branch.replace('/', '-')}-pr.md"
     report.unlink(missing_ok=True)
-    prompt = render("implement.md", {**values, "PR_PATH": str(report), "BASE": base})
+    prompt = render(prompt_name, {**values, "PR_PATH": str(report), "BASE": base})
     run_claude(prompt, repo_dir, CODE_TOOLS, CONFIG["implement_max_turns"])
 
     title, body = read_report(report)
@@ -480,6 +480,76 @@ def ci_first(gh: GitHub, state: dict, queue: list, open_issues: list[dict]) -> l
     return result
 
 
+# --------------------------------------------------------------------------- incidents
+
+INCIDENT_LABEL = "à-développer"
+BOT_LOGIN = "github-actions[bot]"
+
+
+def incident_queue(gh: GitHub, repos: list[str]) -> list[tuple[str, dict]]:
+    """Incidents que le Réparateur n'a pas pu régler seul (issue créée par lui, label à-développer)."""
+    found = []
+    for repo in repos:
+        for issue in gh.issues(repo, state="open", labels=INCIDENT_LABEL):
+            if issue["user"]["login"] == BOT_LOGIN and not labels_of(issue) & BUSY:
+                found.append((repo, issue))
+    return found
+
+
+def main_failures(gh: GitHub, repo: str) -> str:
+    """Échecs actuels des workflows de la branche principale (dernier run de chacun)."""
+    base = gh.repo(repo)["default_branch"]
+    latest: dict[int, dict] = {}
+    for run in gh.workflow_runs(repo, branch=base):
+        if run["event"] != "pull_request" and run["status"] == "completed" \
+                and run["conclusion"] != "cancelled":
+            latest.setdefault(run["workflow_id"], run)
+    reports = []
+    for run in latest.values():
+        if run["conclusion"] in BAD_CONCLUSIONS:
+            failed = [c for c in gh.check_runs(repo, run["head_sha"]) if c["conclusion"] in BAD_CONCLUSIONS]
+            reports.append(f"## « {run['name']} » en échec ({run['html_url']})\n\n"
+                           + failure_report(gh, repo, failed))
+    return "\n\n".join(reports) or "(aucun workflow en échec actuellement : la branche principale est saine)"
+
+
+def start_incident(gh: GitHub, state: dict, repo: str, issue: dict) -> None:
+    number = issue["number"]
+    print(f"\n▶ incident {repo}#{number} {issue['title']}")
+    relabel(gh, repo, number, [INCIDENT_LABEL, "à-relire", "échec", "à-préciser"], ["en-cours"])
+    report = "\n\n".join([issue.get("body") or ""] + [
+        c["body"] for c in gh.comments(repo, number) if c["user"]["login"] == BOT_LOGIN])
+    values = {"OWNER": OWNER, "REPO": repo, "TITLE": issue["title"], "BODY": report,
+              "NOTES": owner_comments(gh, repo, number), "FAILURES": main_failures(gh, repo)}
+    try:
+        pr = code_task(gh, repo, f"agent/incident-{number}", values, issue_url(repo, number),
+                       prompt_name="incident.md")
+    except QuotaExhausted:
+        relabel(gh, repo, number, ["en-cours"], [INCIDENT_LABEL])
+        raise
+    except NoChange as exc:
+        gh.comment(repo, number, "🤔 Je n'ai pas trouvé de correction sûre :\n\n" + truncate(str(exc), 5000)
+                   + "\n\nRéponds en commentaire, puis remets le label `à-développer` pour que je recommence.")
+        relabel(gh, repo, number, ["en-cours"], ["à-préciser"])
+        log(state, "clarify", title=issue["title"], issue=issue_url(repo, number), security=False)
+        return
+    except Exception as exc:  # noqa: BLE001
+        gh.comment(repo, number, "❌ Échec technique du Développeur :\n\n```\n"
+                   + truncate(scrub(str(exc)), 1500) + "\n```\n\nRemets le label `à-développer` pour réessayer.")
+        relabel(gh, repo, number, ["en-cours"], ["échec"])
+        log(state, "failed", title=issue["title"], issue=issue_url(repo, number), security=False,
+            detail=truncate(scrub(str(exc)), 300))
+        return
+    state["pending"].append({
+        "target": repo, "number": pr["number"], "url": pr["html_url"], "branch": f"agent/incident-{number}",
+        "title": issue["title"], "issue_repo": repo, "issue": number, "security": False,
+        "opened": iso(now()), "fix_attempted": False, "branch_updated": False, "human": "",
+        "kind": "incident"})
+    gh.comment(repo, number, f"🔧 Correction proposée : {pr['html_url']}\n\n"
+               "Elle sera mergée automatiquement dès que la CI sera verte.")
+    relabel(gh, repo, number, ["en-cours"], ["pr-ouverte"])
+
+
 # --------------------------------------------------------------------------- PR en attente
 
 
@@ -556,7 +626,10 @@ def redo(gh: GitHub, state: dict, entry: dict) -> None:
     state["pending"].remove(entry)
     repo, number = entry["issue_repo"], entry["issue"]
     issue = gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")
-    requeue = [] if "auto" in labels_of(issue) else ["approuvé"]
+    if entry.get("kind") == "incident":
+        requeue = [INCIDENT_LABEL]
+    else:
+        requeue = [] if "auto" in labels_of(issue) else ["approuvé"]
     relabel(gh, repo, number, ["pr-ouverte"], requeue)
     gh.comment(repo, number, "🔁 Conflit avec des changements mergés entre-temps : je refais la "
                "tâche à partir de la version à jour.")
@@ -585,12 +658,15 @@ def send_back(gh: GitHub, state: dict, entry: dict, reason: str) -> None:
     """Renvoie la tâche au propriétaire : PR laissée ouverte, cases à cocher remises."""
     state["pending"].remove(entry)
     repo, number = entry["issue_repo"], entry["issue"]
+    incident = entry.get("kind") == "incident"
     gh.comment(repo, number, f"⚠️ Je ne merge pas automatiquement : {reason}\n\n"
                f"La PR reste ouverte : {entry['url']}. Tu peux la merger toi-même, ou "
-               "commenter puis cocher **Lancer** pour que je recommence.")
+               + ("commenter puis remettre le label `à-développer` pour que je recommence." if incident
+                  else "commenter puis cocher **Lancer** pour que je recommence."))
     relabel(gh, repo, number, ["pr-ouverte"], ["à-relire"])
-    issue = {"number": number, "body": gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")["body"]}
-    reopen_decision(gh, repo, issue)
+    if not incident:
+        issue = {"number": number, "body": gh.get(f"/repos/{OWNER}/{repo}/issues/{number}")["body"]}
+        reopen_decision(gh, repo, issue)
     log(state, "review", title=entry["title"], pr=entry["url"], issue=issue_url(repo, number),
         security=entry["security"], detail=reason)
 
@@ -1003,8 +1079,22 @@ def main() -> None:
         # CI d'abord, puis sécurité, puis les décisions du propriétaire, puis le reste.
         queue.sort(key=lambda t: (t[0] != SECURITY_REPO, not t[2], t[1]["number"]))
         queue = ci_first(gh, state, queue, issues[PUBLIC_REPO])
-        print(f"\n— {len(queue)} tâche(s) à démarrer")
+        public = [r["name"] for r in gh.public_repos()]
+        incidents = incident_queue(gh, public)
+        print(f"\n— {len(incidents)} incident(s) confié(s) par le Réparateur")
         started = 0
+        for repo, issue in incidents:
+            if not can_claude or started >= CONFIG["max_tasks_per_run"]:
+                break
+            try:
+                start_incident(gh, state, repo, issue)
+                started += 1
+            except QuotaExhausted:
+                print("  ⏸ quota Pro épuisé : reprise au prochain passage.")
+                can_claude = False
+            save_state(state)
+
+        print(f"\n— {len(queue)} tâche(s) à démarrer")
         for repo, issue, manual in queue:
             if not can_claude or started >= CONFIG["max_tasks_per_run"]:
                 break
@@ -1016,7 +1106,6 @@ def main() -> None:
                 can_claude = False
             save_state(state)
 
-        public = [r["name"] for r in gh.public_repos()]
         if CONFIG["dependabot_automerge"]:
             print("\n— Dependabot")
             dependabot(gh, state, public)
@@ -1028,7 +1117,7 @@ def main() -> None:
         print("\n— Annulations faites par le Réparateur")
         watch(gh, state)
 
-        busy = bool(state["pending"]) or started < len(queue)
+        busy = bool(state["pending"]) or started < len(queue) + len(incidents)
         maybe_bilan(gh, bot, state, busy)
     finally:
         save_state(state)

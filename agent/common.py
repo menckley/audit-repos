@@ -35,6 +35,8 @@ LABEL_COLORS = {
     "approuvé": "0e8a16",
     "refusé": "b60205",
     "plus-tard": "c5def5",
+    "à-développer": "d93f0b",
+    "réparation": "b60205",
     "obsolète": "ededed",
     "en-cours": "1d76db",
     "pr-ouverte": "0052cc",
