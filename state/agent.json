@@ -693,6 +693,7 @@
     "major:pricer#19",
     "red:power-hpfc#17:6e3076a4101084c4cf4de046fe777a28ed1c0900",
     "major:power-hpfc#18",
-    "red:power-hpfc#20:121506a60ab15e17d60d69796ed12d2111dec292"
+    "red:power-hpfc#20:121506a60ab15e17d60d69796ed12d2111dec292",
+    "depfix:power-hpfc#22"
   ]
 }
