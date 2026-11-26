@@ -1,5 +1,27 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "target": "newsletter",
+      "number": 12,
+      "url": "https://github.com/menckley/newsletter/pull/12",
+      "branch": "agent/incident-11",
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "issue_repo": "newsletter",
+      "issue": 11,
+      "security": false,
+      "opened": "2026-11-26T22:57:22+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": "",
+      "kind": "incident",
+      "relaunch": [
+        {
+          "id": 365472429,
+          "name": "Récap géopolitique"
+        }
+      ]
+    }
+  ],
   "watch": [
     {
       "target": "pricer",
