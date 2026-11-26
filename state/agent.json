@@ -1,27 +1,5 @@
 {
-  "pending": [
-    {
-      "target": "newsletter",
-      "number": 12,
-      "url": "https://github.com/menckley/newsletter/pull/12",
-      "branch": "agent/incident-11",
-      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
-      "issue_repo": "newsletter",
-      "issue": 11,
-      "security": false,
-      "opened": "2026-11-26T22:57:22+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": "",
-      "kind": "incident",
-      "relaunch": [
-        {
-          "id": 365472429,
-          "name": "Récap géopolitique"
-        }
-      ]
-    }
-  ],
+  "pending": [],
   "watch": [
     {
       "target": "power-hpfc",
@@ -91,6 +69,16 @@
       "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
       "issue_repo": "power-hpfc",
       "issue": 26,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "d09f59201cd0d12be9d15048bcc9e04c7be01d46",
+      "merged": "2026-11-26T23:04:56+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/12",
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "issue_repo": "newsletter",
+      "issue": 11,
       "security": false
     }
   ],
@@ -805,6 +793,16 @@
       "issue": "https://github.com/menckley/power-hpfc/issues/26",
       "security": false,
       "repo": "power-hpfc"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-26T23:04:56+00:00",
+      "reported": false,
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "pr": "https://github.com/menckley/newsletter/pull/12",
+      "issue": "https://github.com/menckley/newsletter/issues/11",
+      "security": false,
+      "repo": "newsletter"
     }
   ],
   "last_bilan": "2026-11-26T13:58:40+00:00",
