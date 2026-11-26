@@ -3,16 +3,6 @@
   "watch": [
     {
       "target": "pricer",
-      "sha": "b10d4a05a9727259f4ffddfd7fa2ec55deaf1929",
-      "merged": "2026-11-24T06:06:10+00:00",
-      "pr": "https://github.com/menckley/pricer/pull/17",
-      "title": "Update pip-audit requirement from >=2.7 to >=2.10.1",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
-      "target": "pricer",
       "sha": "d273aea26166da44fec67166615f91f3a4488d06",
       "merged": "2026-11-24T17:50:37+00:00",
       "pr": "https://github.com/menckley/pricer/pull/20",
@@ -769,7 +759,7 @@
     {
       "type": "clarify",
       "at": "2026-11-25T21:57:38+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
       "issue": "https://github.com/menckley/power-hpfc/issues/24",
       "security": false
@@ -777,7 +767,7 @@
     {
       "type": "review",
       "at": "2026-11-25T22:19:40+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
       "pr": "https://github.com/menckley/power-hpfc/pull/25",
       "issue": "https://github.com/menckley/power-hpfc/issues/24",
@@ -787,7 +777,7 @@
     {
       "type": "merged",
       "at": "2026-11-25T22:32:05+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
       "pr": "https://github.com/menckley/power-hpfc/pull/25",
       "issue": "https://github.com/menckley/power-hpfc/issues/24",
@@ -797,7 +787,7 @@
     {
       "type": "merged",
       "at": "2026-11-26T04:20:02+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
       "pr": "https://github.com/menckley/power-hpfc/pull/27",
       "issue": "https://github.com/menckley/power-hpfc/issues/26",
@@ -805,7 +795,7 @@
       "repo": "power-hpfc"
     }
   ],
-  "last_bilan": "2026-11-25T21:47:22+00:00",
+  "last_bilan": "2026-11-26T13:58:40+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9",
