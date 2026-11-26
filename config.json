@@ -31,5 +31,6 @@
   "relaunch_delay_minutes": 6,
   "relaunch_max_chain": 30,
   "audit_retry_hours": 3,
-  "incident_max_turns": 150
+  "incident_max_turns": 150,
+  "relaunch_wait_minutes": 45
 }

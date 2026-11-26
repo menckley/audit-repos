@@ -881,6 +881,7 @@ def test_relaunch_after_incident():
     import implement as imp
     imp = importlib.reload(imp)
     calls, comments = [], []
+    results = {3: "success", 4: "success"}
 
     class G:
         def __init__(self, refuse=False):
@@ -895,6 +896,11 @@ def test_relaunch_after_incident():
             calls.append((method, path, data))
             return {}
 
+        def get(self, path, **params):
+            wf = int(path.split("/workflows/")[1].split("/")[0])
+            return {"workflow_runs": [{"status": "completed", "conclusion": results[wf],
+                                       "created_at": "2999-01-01T00:00:00+00:00", "html_url": f"https://run/{wf}"}]}
+
         def comment(self, repo, n, body):
             comments.append(body)
 
@@ -903,10 +909,30 @@ def test_relaunch_after_incident():
     imp.relaunch_repaired(G(), entry)
     assert [c[1] for c in calls] == ["/repos/menckley/power-hpfc/actions/workflows/3/dispatches",
                                      "/repos/menckley/power-hpfc/actions/workflows/4/dispatches"]
-    assert "HPFC quotidienne" in comments[-1] and "Réparateur reprendra" in comments[-1]
+    assert "✅ « HPFC quotidienne »" in comments[-1] and "✅ « Fraîcheur de l'archive »" in comments[-1]
+    # le calcul échoue encore : la vérification de fraîcheur n'est pas lancée
+    calls.clear(); results[3] = "failure"
+    imp.relaunch_repaired(G(), entry)
+    assert len(calls) == 1 and "Réparateur prend la main" in comments[-1]
     imp.relaunch_repaired(G(refuse=True), entry)
     assert "Actions en lecture et écriture" in comments[-1], "permission manquante : expliqué"
-    print("OK 30 après correction d'un incident : workflows en panne relancés (ou explication)")
+
+    # ordre : le workflow tombé en premier (la cause) est relancé d'abord
+    class Runs:
+        def repo(self, r):
+            return {"default_branch": "main"}
+
+        def workflow_runs(self, repo, **params):
+            def run(wf, name, conclusion, day):
+                return {"workflow_id": wf, "name": name, "event": "schedule", "status": "completed",
+                        "conclusion": conclusion, "created_at": f"2026-11-{day}T12:00:00Z", "head_sha": "x"}
+            return [run(4, "Fraîcheur de l'archive", "failure", 26), run(3, "HPFC quotidienne", "failure", 26),
+                    run(4, "Fraîcheur de l'archive", "failure", 25), run(3, "HPFC quotidienne", "failure", 24),
+                    run(4, "Fraîcheur de l'archive", "success", 23), run(3, "HPFC quotidienne", "success", 23)]
+
+    order = [r["name"] for r in imp.failing_workflows(Runs(), "power-hpfc")]
+    assert order == ["HPFC quotidienne", "Fraîcheur de l'archive"], order
+    print("OK 30 workflows réparés relancés un par un, la cause d'abord, arrêt si échec")
 
     # PR réutilisée : sa description est remplacée par celle du nouveau travail
     patches = []

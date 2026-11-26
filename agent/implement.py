@@ -23,7 +23,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from common import (AGENT_MARK, CONFIG, DECISION_START, MAX_TURNS_MARK, error_excerpt, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
+from common import (AGENT_MARK, CONFIG, DECISION_START, MAX_TURNS_MARK, error_excerpt, failure_window, LATER_RE, LAUNCH_RE, MARKER_RE, OWNER, PUBLIC_REPO, REFUSE_RE,
                     REPAIR_BACK, REPAIR_MARK,
                     ROOT, SECURITY_REPO, V2, GitHub, GitHubError, QuotaExhausted, commit_state,
                     compose_body, decision_block, footer, refresh_decision, fresh_clone, is_auto, render,
@@ -525,14 +525,22 @@ def incident_queue(gh: GitHub, repos: list[str]) -> list[tuple[str, dict]]:
 
 
 def failing_workflows(gh: GitHub, repo: str) -> list[dict]:
-    """Derniers runs en échec de chaque workflow de la branche principale."""
+    """Derniers runs en échec de chaque workflow de la branche principale, avec la date du
+    premier échec de la série (`failing_since`), du plus ancien au plus récent : le workflow
+    tombé en premier est en général la cause, les suivants en dépendent."""
     base = gh.repo(repo)["default_branch"]
-    latest: dict[int, dict] = {}
+    by_workflow: dict[int, list[dict]] = {}
     for run in gh.workflow_runs(repo, branch=base):
-        if run["event"] != "pull_request" and run["status"] == "completed" \
-                and run["conclusion"] != "cancelled":
-            latest.setdefault(run["workflow_id"], run)
-    return [run for run in latest.values() if run["conclusion"] in BAD_CONCLUSIONS]
+        if run["event"] != "pull_request":
+            by_workflow.setdefault(run["workflow_id"], []).append(run)
+    broken = []
+    for runs in by_workflow.values():
+        done = [r for r in runs if r["status"] == "completed" and r["conclusion"] != "cancelled"]
+        if not done or done[0]["conclusion"] not in BAD_CONCLUSIONS:
+            continue
+        _, first = failure_window(runs)
+        broken.append(dict(done[0], failing_since=(first or done[0])["created_at"]))
+    return sorted(broken, key=lambda r: r["failing_since"])
 
 
 def main_failures(gh: GitHub, repo: str) -> str:
@@ -561,7 +569,7 @@ def start_incident(gh: GitHub, state: dict, repo: str, issue: dict) -> None:
     values = {"OWNER": OWNER, "REPO": repo, "TITLE": issue["title"], "BODY": report,
               "NOTES": owner_comments(gh, repo, number), "FAILURES": main_failures(gh, repo)}
     # Les workflows en panne seront relancés une fois la correction mergée.
-    broken = [{"id": r["workflow_id"], "name": r["name"]} for r in failing_workflows(gh, repo)]
+    broken = [{"id": r["workflow_id"], "name": r["name"]} for r in failing_workflows(gh, repo)]  # cause d'abord
     try:
         pr = code_task(gh, repo, f"agent/incident-{number}", values, issue_url(repo, number),
                        prompt_name="incident.md")
@@ -677,30 +685,49 @@ def redo(gh: GitHub, state: dict, entry: dict) -> None:
     print(f"  🔁 à refaire (conflit) : {entry['url']}")
 
 
+def wait_for_dispatched_run(gh: GitHub, repo: str, workflow_id: int, since: str) -> dict | None:
+    """Attend la fin du run lancé à la main (workflow_dispatch) après `since`."""
+    deadline = time.time() + CONFIG["relaunch_wait_minutes"] * 60
+    while time.time() < deadline:
+        time.sleep(20)
+        runs = gh.get(f"/repos/{OWNER}/{repo}/actions/workflows/{workflow_id}/runs",
+                      event="workflow_dispatch", per_page=5).get("workflow_runs", [])
+        run = next((r for r in runs if r["created_at"] >= since), None)
+        if run and run["status"] == "completed":
+            return run
+    return None
+
+
 def relaunch_repaired(gh: GitHub, entry: dict) -> None:
-    """Après la correction d'un incident, relance les workflows qui étaient en panne pour
-    vérifier la réparation et rattraper le travail du jour (ex. calcul quotidien)."""
+    """Après la correction d'un incident, relance les workflows qui étaient en panne, **un par
+    un** et dans l'ordre où ils sont tombés : un workflow qui dépend d'un autre (ex. contrôle
+    de fraîcheur après le calcul) ne repart qu'une fois le précédent réussi."""
     workflows = entry.get("relaunch") or []
     if not workflows:
         return
     target = entry["target"]
     base = gh.repo(target)["default_branch"]
-    done, failed = [], []
+    lines = []
     for wf in workflows:
+        since = iso(now() - timedelta(seconds=5))
         try:
             gh.write("POST", f"/repos/{OWNER}/{target}/actions/workflows/{wf['id']}/dispatches", {"ref": base})
-            done.append(wf["name"])
         except GitHubError as exc:
-            failed.append(f"{wf['name']} ({exc.status})")
-    lines = []
-    if done:
-        lines.append("🔁 Workflows relancés pour vérifier la réparation : " + ", ".join(f"« {n} »" for n in done)
-                     + ". Le Réparateur reprendra la main s'ils échouent encore.")
-    if failed:
-        lines.append("⚠️ Relance impossible pour : " + ", ".join(failed) + ". Vérifie que `GH_PAT` a la "
-                     "permission **Actions en lecture et écriture**.")
-    gh.comment(entry["issue_repo"], entry["issue"], "\n\n".join(lines))
-    print(f"  🔁 relancés : {done or '-'} ; impossibles : {failed or '-'}")
+            lines.append(f"⚠️ Relance impossible pour « {wf['name']} » ({exc.status}) : vérifie que `GH_PAT` "
+                         "a la permission **Actions en lecture et écriture**.")
+            break
+        run = wait_for_dispatched_run(gh, target, wf["id"], since)
+        if run is None:
+            lines.append(f"⏳ « {wf['name']} » relancé, résultat pas encore connu : j'arrête là, le "
+                         "Réparateur prendra la main en cas d'échec.")
+            break
+        if run["conclusion"] != "success":
+            lines.append(f"❌ « {wf['name']} » échoue encore ([run]({run['html_url']})) : le Réparateur "
+                         "prend la main. Les workflows suivants n'ont pas été relancés.")
+            break
+        lines.append(f"✅ « {wf['name']} » relancé et réussi ([run]({run['html_url']})).")
+    gh.comment(entry["issue_repo"], entry["issue"], "🔁 Vérification de la réparation :\n\n" + "\n".join(lines))
+    print("  🔁 " + " | ".join(lines))
 
 
 def finish_merged(gh: GitHub, state: dict, entry: dict, sha: str | None) -> None:
