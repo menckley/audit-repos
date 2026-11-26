@@ -1,5 +1,31 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "target": "power-hpfc",
+      "number": 27,
+      "url": "https://github.com/menckley/power-hpfc/pull/27",
+      "branch": "agent/incident-26",
+      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
+      "issue_repo": "power-hpfc",
+      "issue": 26,
+      "security": false,
+      "opened": "2026-11-26T04:13:06+00:00",
+      "fix_attempted": false,
+      "branch_updated": false,
+      "human": "",
+      "kind": "incident",
+      "relaunch": [
+        {
+          "id": 377787523,
+          "name": "HPFC quotidienne"
+        },
+        {
+          "id": 422439255,
+          "name": "Fraîcheur de l'archive"
+        }
+      ]
+    }
+  ],
   "watch": [
     {
       "target": "pricer",
