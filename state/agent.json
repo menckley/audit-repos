@@ -2,26 +2,6 @@
   "pending": [],
   "watch": [
     {
-      "target": "settlements-eex",
-      "sha": "76b123b01bfe2c4dab55b276bd2cbc1cc26cf6d6",
-      "merged": "2026-11-25T21:46:58+00:00",
-      "pr": "https://github.com/menckley/settlements-eex/pull/11",
-      "title": "Bump certifi from 2026.10.23 to 2026.11.20",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
-      "target": "power-hpfc",
-      "sha": "167ee6a631c8454eae4aa274518be272de76709b",
-      "merged": "2026-11-25T22:32:05+00:00",
-      "pr": "https://github.com/menckley/power-hpfc/pull/25",
-      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
-      "issue_repo": "power-hpfc",
-      "issue": 24,
-      "security": false
-    },
-    {
       "target": "power-hpfc",
       "sha": "a225a5c945cefcdba9cfaa0d5c0dfa71789fa702",
       "merged": "2026-11-26T04:20:02+00:00",
@@ -787,13 +767,13 @@
     {
       "type": "clarify",
       "at": "2026-11-27T14:53:06+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « Récap géopolitique » en échec sur newsletter",
       "issue": "https://github.com/menckley/newsletter/issues/15",
       "security": false
     }
   ],
-  "last_bilan": "2026-11-27T05:03:23+00:00",
+  "last_bilan": "2026-11-27T23:20:45+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9",
