@@ -803,6 +803,14 @@
       "issue": "https://github.com/menckley/newsletter/issues/13",
       "security": false,
       "repo": "newsletter"
+    },
+    {
+      "type": "clarify",
+      "at": "2026-11-27T14:53:06+00:00",
+      "reported": false,
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "issue": "https://github.com/menckley/newsletter/issues/15",
+      "security": false
     }
   ],
   "last_bilan": "2026-11-27T05:03:23+00:00",
