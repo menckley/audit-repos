@@ -25,26 +25,6 @@
   "watch": [
     {
       "target": "power-hpfc",
-      "sha": "57a421a914514a48a95a42306456280a235924c9",
-      "merged": "2026-11-25T02:32:42+00:00",
-      "pr": "https://github.com/menckley/power-hpfc/pull/16",
-      "title": "Bump ruff from 0.17.5 to 0.17.6",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
-      "target": "pricer",
-      "sha": "0722e451aec18dec373269f0a07940f11166518d",
-      "merged": "2026-11-25T02:32:47+00:00",
-      "pr": "https://github.com/menckley/pricer/pull/21",
-      "title": "Update ruff requirement from >=0.5 to >=0.17.6",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
-      "target": "power-hpfc",
       "sha": "3b355ec9e75d65beb1a88df45e3e5a4bc1866d3e",
       "merged": "2026-11-25T07:57:14+00:00",
       "pr": "https://github.com/menckley/power-hpfc/pull/22",
