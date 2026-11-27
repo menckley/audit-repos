@@ -1,27 +1,5 @@
 {
-  "pending": [
-    {
-      "target": "newsletter",
-      "number": 14,
-      "url": "https://github.com/menckley/newsletter/pull/14",
-      "branch": "agent/incident-13",
-      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
-      "issue_repo": "newsletter",
-      "issue": 13,
-      "security": false,
-      "opened": "2026-11-27T04:55:55+00:00",
-      "fix_attempted": false,
-      "branch_updated": false,
-      "human": "",
-      "kind": "incident",
-      "relaunch": [
-        {
-          "id": 365472429,
-          "name": "Récap géopolitique"
-        }
-      ]
-    }
-  ],
+  "pending": [],
   "watch": [
     {
       "target": "power-hpfc",
@@ -81,6 +59,16 @@
       "title": "🚑 « Récap géopolitique » en échec sur newsletter",
       "issue_repo": "newsletter",
       "issue": 11,
+      "security": false
+    },
+    {
+      "target": "newsletter",
+      "sha": "fa895df0cfc581627b555dd290a8c1af56a451f3",
+      "merged": "2026-11-27T05:03:02+00:00",
+      "pr": "https://github.com/menckley/newsletter/pull/14",
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "issue_repo": "newsletter",
+      "issue": 13,
       "security": false
     }
   ],
@@ -799,15 +787,25 @@
     {
       "type": "merged",
       "at": "2026-11-26T23:04:56+00:00",
-      "reported": false,
+      "reported": true,
       "title": "🚑 « Récap géopolitique » en échec sur newsletter",
       "pr": "https://github.com/menckley/newsletter/pull/12",
       "issue": "https://github.com/menckley/newsletter/issues/11",
       "security": false,
       "repo": "newsletter"
+    },
+    {
+      "type": "merged",
+      "at": "2026-11-27T05:03:02+00:00",
+      "reported": true,
+      "title": "🚑 « Récap géopolitique » en échec sur newsletter",
+      "pr": "https://github.com/menckley/newsletter/pull/14",
+      "issue": "https://github.com/menckley/newsletter/issues/13",
+      "security": false,
+      "repo": "newsletter"
     }
   ],
-  "last_bilan": "2026-11-26T13:58:40+00:00",
+  "last_bilan": "2026-11-27T05:03:23+00:00",
   "seen": [
     "major:settlements-eex#4",
     "major:power-hpfc#9",
