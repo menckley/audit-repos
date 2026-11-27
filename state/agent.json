@@ -2,26 +2,6 @@
   "pending": [],
   "watch": [
     {
-      "target": "power-hpfc",
-      "sha": "3b355ec9e75d65beb1a88df45e3e5a4bc1866d3e",
-      "merged": "2026-11-25T07:57:14+00:00",
-      "pr": "https://github.com/menckley/power-hpfc/pull/22",
-      "title": "build(deps): bump watchdog from 7.1.0 to 7.1.1 in the dependances-python group",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
-      "target": "settlements-eex",
-      "sha": "4e6e23d9b368bf315f559dfb6b32d7ff8903c99e",
-      "merged": "2026-11-25T13:00:25+00:00",
-      "pr": "https://github.com/menckley/settlements-eex/pull/10",
-      "title": "Bump ruff from 0.17.5 to 0.17.6",
-      "issue_repo": null,
-      "issue": null,
-      "security": false
-    },
-    {
       "target": "settlements-eex",
       "sha": "76b123b01bfe2c4dab55b276bd2cbc1cc26cf6d6",
       "merged": "2026-11-25T21:46:58+00:00",
