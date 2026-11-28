@@ -2,16 +2,6 @@
   "pending": [],
   "watch": [
     {
-      "target": "power-hpfc",
-      "sha": "a225a5c945cefcdba9cfaa0d5c0dfa71789fa702",
-      "merged": "2026-11-26T04:20:02+00:00",
-      "pr": "https://github.com/menckley/power-hpfc/pull/27",
-      "title": "🚑 « HPFC quotidienne » en échec sur power-hpfc",
-      "issue_repo": "power-hpfc",
-      "issue": 26,
-      "security": false
-    },
-    {
       "target": "newsletter",
       "sha": "d09f59201cd0d12be9d15048bcc9e04c7be01d46",
       "merged": "2026-11-26T23:04:56+00:00",
